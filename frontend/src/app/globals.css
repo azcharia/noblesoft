@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --accent: #0052FF;
+    --accent-secondary: #4D7CFF;
+    --foreground: #0F172A;
+    --background: #FAFAFA;
+  }
+
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  
+  h1, h2, h3 {
+    @apply font-display;
+  }
+}
+
+@layer utilities {
+  .gradient-text {
+    @apply bg-gradient-to-r from-accent to-accent-secondary bg-clip-text text-transparent;
+  }
+  
+  .gradient-bg {
+    @apply bg-gradient-to-r from-accent to-accent-secondary;
+  }
+  
+  .gradient-border {
+    @apply relative;
+  }
+  
+  .gradient-border::before {
+    content: '';
+    @apply absolute inset-0 rounded-[inherit] p-[2px] bg-gradient-to-r from-accent to-accent-secondary;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  .gradient-underline {
+    @apply pointer-events-none absolute -bottom-1 left-0 h-3 w-full rounded-sm;
+    background: linear-gradient(to right, rgba(0, 82, 255, 0.15), rgba(77, 124, 255, 0.1));
+  }
+
+  .section-label {
+    @apply inline-flex items-center gap-3 rounded-full border border-accent/30 bg-accent/5 px-5 py-2;
+  }
+
+  .section-label-dot {
+    @apply h-2 w-2 rounded-full bg-accent animate-pulse-dot;
+  }
+
+  .section-label-text {
+    @apply font-mono text-xs uppercase tracking-[0.15em] text-accent;
+  }
+
+  .inverted-section {
+    @apply relative overflow-hidden bg-foreground text-background;
+  }
+
+  .radial-accent-glow {
+    background: radial-gradient(circle at center, rgba(0, 82, 255, 0.12) 0%, rgba(0, 82, 255, 0) 70%);
+  }
+
+  .radial-accent-glow-subtle {
+    background: radial-gradient(circle at center, rgba(77, 124, 255, 0.08) 0%, rgba(77, 124, 255, 0) 70%);
+  }
+  
+  /* Dot pattern texture for dark sections */
+  .dot-pattern {
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

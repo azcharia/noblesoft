@@ -1,0 +1,36 @@
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env.local
+
+# Python
+__pycache__/
+*.pyc
+backend/venv/
+
+# Node
+frontend/node_modules/
+frontend/.next/
+
+# Documentation - Internal/Architecture
+ENVIRONMENT_SECURITY.md
+modelbisnisnoblesoft.md
+PHASE_1_ARCHITECTURE.md
+PHASE_2_COMPLETE.md
+PHASE_3_COMPLETE.md
+PHASE_4_COMPLETE.md
+PHASE_5_COMPLETE.md
+
+# Runtime artifacts and logs (contains Supabase project IDs and debug info)
+.runtime/
+*.log
+*.err
+
+# OS and IDE
+.DS_Store
+.vscode/settings.json
+*.swp
+*.swo
+

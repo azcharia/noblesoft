@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Fullstack Dev",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/run-dev.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Stop Fullstack Dev",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/stop-dev.ps1"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Preflight Check",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/preflight.ps1"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
