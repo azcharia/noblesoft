@@ -20,6 +20,7 @@ from app.models.user import (
     TenantUserDeactivateResponse,
     TenantUserInviteRequest,
     TenantUserInviteResponse,
+    TenantUserReactivateResponse,
     TenantUserResponse,
     TenantUsersListResponse,
 )
@@ -93,7 +94,7 @@ class TenantService:
         include_inactive: bool = False,
     ) -> TenantUsersListResponse:
         query = self.db.table("users").select(
-            "id, tenant_id, email, full_name, role, is_active, created_at, updated_at",
+            "id, tenant_id, email, full_name, role, role_id, branch_id, is_active, created_at, updated_at",
             count="exact",
         ).eq("tenant_id", current_user.tenant_id)
 
@@ -145,12 +146,25 @@ class TenantService:
         if not created_user_id:
             raise Exception("Failed to create auth user for invitation")
 
+        role_id: str | None = None
+        try:
+            role_lookup = self.db.table("roles").select("id").eq(
+                "tenant_id", current_user.tenant_id
+            ).eq("code", payload.role).single().execute()
+            role_id = (role_lookup.data or {}).get("id")
+        except Exception as role_lookup_error:
+            logger.debug("Role lookup skipped during invite: %s", role_lookup_error)
+
+        if not role_id and payload.role not in {"owner", "admin", "member"}:
+            raise ValueError(f"Role '{payload.role}' not found for this tenant")
+
         insert_payload = {
             "id": created_user_id,
             "tenant_id": current_user.tenant_id,
             "email": payload.email.lower(),
             "full_name": payload.full_name,
             "role": payload.role,
+            "role_id": role_id,
             "is_active": True,
         }
 
@@ -195,6 +209,41 @@ class TenantService:
         return TenantUserDeactivateResponse(
             user_id=user_id,
             deactivated=bool(response.data),
+        )
+
+    async def reactivate_tenant_user(
+        self,
+        user_id: str,
+        current_user: CurrentUser,
+    ) -> TenantUserReactivateResponse:
+        target = self.db.table("users").select("id, role, is_active").eq("id", user_id).eq(
+            "tenant_id", current_user.tenant_id
+        ).single().execute()
+
+        if not target.data:
+            return TenantUserReactivateResponse(user_id=user_id, reactivated=False)
+
+        if target.data.get("role") == "owner" and not current_user.is_owner():
+            raise PermissionError("Only owner can reactivate owner accounts")
+
+        if bool(target.data.get("is_active")):
+            return TenantUserReactivateResponse(user_id=user_id, reactivated=True)
+
+        active_count_response = self.db.table("users").select(
+            "id", count="exact"
+        ).eq("tenant_id", current_user.tenant_id).eq("is_active", True).execute()
+
+        active_count = active_count_response.count or len(active_count_response.data or [])
+        if active_count >= current_user.max_users:
+            raise ValueError("Tenant user limit has been reached")
+
+        response = self.db.table("users").update(
+            {"is_active": True, "updated_at": datetime.utcnow().isoformat()}
+        ).eq("id", user_id).eq("tenant_id", current_user.tenant_id).execute()
+
+        return TenantUserReactivateResponse(
+            user_id=user_id,
+            reactivated=bool(response.data),
         )
 
     def _extract_auth_user_id(self, auth_result: Any) -> str | None:

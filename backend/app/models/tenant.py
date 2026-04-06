@@ -1,6 +1,6 @@
 """Pydantic models for tenant management endpoints."""
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -19,6 +19,10 @@ class TenantResponse(BaseModel):
     is_active: bool = True
     max_users: int = 5
     payment_gateway_customer_id: Optional[str] = None
+    billing_period: Literal["monthly", "annual"] = "monthly"
+    active_add_ons: list[dict[str, Any]] = Field(default_factory=list)
+    billing_start_date: Optional[datetime] = None
+    billing_end_date: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 

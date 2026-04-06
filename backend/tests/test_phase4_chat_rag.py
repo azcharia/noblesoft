@@ -13,7 +13,10 @@ from app.config import settings
 client = TestClient(app)
 
 
-def _build_user(subscription_tier: str = "pro") -> CurrentUser:
+def _build_user(
+    subscription_tier: str = "pro",
+    add_ons: list[dict[str, object]] | None = None,
+) -> CurrentUser:
     return CurrentUser(
         {
             "id": "user-1",
@@ -28,6 +31,7 @@ def _build_user(subscription_tier: str = "pro") -> CurrentUser:
                 "is_active": True,
                 "trial_end_date": None,
                 "max_users": 20,
+                "active_add_ons": add_ons or [],
             },
         }
     )
@@ -42,9 +46,9 @@ def reset_dependency_overrides():
 
 @pytest.fixture
 def override_current_user():
-    def _override(tier: str = "pro"):
+    def _override(tier: str = "pro", add_ons: list[dict[str, object]] | None = None):
         async def _dependency() -> CurrentUser:
-            return _build_user(tier)
+            return _build_user(tier, add_ons=add_ons)
 
         app.dependency_overrides[get_current_user] = _dependency
 
@@ -437,8 +441,19 @@ def test_chat_function_call_requires_enterprise(override_current_user):
     assert response.status_code == 403
 
 
+def test_chat_function_call_requires_ai_agent_add_on(override_current_user):
+    override_current_user("enterprise", add_ons=[])
+
+    response = client.post(
+        "/api/v1/chat/function-call",
+        json={"message": "Buatkan invoice baru"},
+    )
+
+    assert response.status_code == 403
+
+
 def test_chat_function_call_forwards_history(monkeypatch: pytest.MonkeyPatch, override_current_user):
-    override_current_user("enterprise")
+    override_current_user("enterprise", add_ons=[{"code": "ai_agent_pack", "quantity": 1}])
     captured = {"history": None}
 
     def mock_init(self):

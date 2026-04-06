@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.core.dependencies import CurrentUser, get_current_user, require_owner
 from app.models.billing import (
+    BillingCatalogResponse,
     BillingStatusResponse,
     BillingTransactionRequest,
     BillingTransactionResponse,
@@ -12,6 +13,22 @@ from app.models.billing import (
 from app.services.billing_service import BillingService
 
 router = APIRouter()
+
+
+@router.get(
+    "/catalog",
+    response_model=BillingCatalogResponse,
+    summary="Get billing plans and add-on catalog",
+)
+async def get_billing_catalog(
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    service = BillingService()
+    try:
+        _ = current_user
+        return service.get_billing_catalog()
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
 
 
 @router.get(

@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 
-from app.core.dependencies import require_tier, CurrentUser
+from app.core.dependencies import require_add_on, require_tier, CurrentUser
 from app.core.database import get_supabase_admin_client
 from app.ai.embeddings import EmbeddingService
 from app.services.ai_agent_service import AIAgentService
@@ -236,7 +236,8 @@ async def reindex_chat_documents(
     "/function-call",
     response_model=ChatResponse,
     summary="Chat with function calling (EXPERIMENTAL)",
-    description="Advanced chat that can execute actions"
+    description="Advanced chat that can execute actions",
+    dependencies=[Depends(require_add_on("ai_agent_pack"))],
 )
 async def chat_with_function_calling(
     chat_message: ChatMessage,
@@ -262,7 +263,7 @@ async def chat_with_function_calling(
     3. Execute the appropriate function
     4. Confirm the action
     
-    **Requires Enterprise subscription.**
+    **Requires Enterprise subscription and AI Agent Pack add-on.**
     """
     service = AIAgentService()
     

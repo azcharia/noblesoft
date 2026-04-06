@@ -4,8 +4,10 @@ Provides reusable dependencies for authentication, authorization, and context
 """
 from fastapi import Depends, Request
 from typing import Dict, Any, Optional
+import json
 import logging
 
+from app.core.database import get_supabase_admin_client
 from app.core.security import (
     extract_token_from_header,
     verify_jwt_token,
@@ -15,6 +17,33 @@ from app.core.security import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+LEGACY_ROLE_PERMISSION_MAP: dict[str, set[str]] = {
+    "owner": {"*"},
+    "admin": {
+        "users.read",
+        "users.invite",
+        "users.status",
+        "roles.read",
+        "permissions.read",
+        "branches.read",
+        "branches.write",
+        "audit.read",
+        "products.read",
+        "products.write",
+        "invoices.read",
+        "invoices.write",
+        "chat.use",
+    },
+    "member": {
+        "products.read",
+        "products.write",
+        "invoices.read",
+        "invoices.write",
+        "chat.use",
+    },
+}
 
 
 class CurrentUser:
@@ -27,7 +56,26 @@ class CurrentUser:
         self.email: str = user_data["email"]
         self.full_name: Optional[str] = user_data.get("full_name")
         self.role: str = user_data.get("role", "member")
+        self.role_id: Optional[str] = user_data.get("role_id")
+        self.branch_id: Optional[str] = user_data.get("branch_id")
         self.is_active: bool = user_data.get("is_active", True)
+
+        role_data = user_data.get("roles", {})
+        self.role_name: Optional[str] = None
+        if isinstance(role_data, dict):
+            self.role_name = role_data.get("name")
+
+        raw_permission_codes = user_data.get("permission_codes")
+        if isinstance(raw_permission_codes, list):
+            self.permission_codes: list[str] = [
+                str(item).strip()
+                for item in raw_permission_codes
+                if isinstance(item, str) and item.strip()
+            ]
+        else:
+            self.permission_codes = sorted(
+                LEGACY_ROLE_PERMISSION_MAP.get(self.role, set())
+            )
         
         # Tenant information
         tenant = user_data.get("tenants", {})
@@ -37,6 +85,9 @@ class CurrentUser:
         self.tenant_is_active: bool = tenant.get("is_active", True)
         self.trial_end_date: Optional[str] = tenant.get("trial_end_date")
         self.max_users: int = tenant.get("max_users", 5)
+        self.billing_period: str = tenant.get("billing_period", "monthly")
+        active_add_ons = tenant.get("active_add_ons", [])
+        self.active_add_ons: list[dict[str, Any]] = active_add_ons if isinstance(active_add_ons, list) else []
     
     def is_owner(self) -> bool:
         """Check if user is tenant owner"""
@@ -49,6 +100,29 @@ class CurrentUser:
     def has_tier(self, required_tiers: list[str]) -> bool:
         """Check if user's subscription tier is in the required list"""
         return self.subscription_tier in required_tiers
+
+    def has_permission(self, permission_code: str) -> bool:
+        """Check if user has an explicit or wildcard permission."""
+        if self.is_owner():
+            return True
+
+        normalized = permission_code.strip().lower()
+        if not normalized:
+            return False
+
+        permission_set = {code.lower() for code in self.permission_codes}
+        if "*" in permission_set or normalized in permission_set:
+            return True
+
+        resource_wildcard = f"{normalized.split('.', 1)[0]}.*"
+        if resource_wildcard in permission_set:
+            return True
+
+        legacy_permissions = LEGACY_ROLE_PERMISSION_MAP.get(self.role, set())
+        if "*" in legacy_permissions or normalized in legacy_permissions:
+            return True
+
+        return resource_wildcard in legacy_permissions
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for logging/debugging"""
@@ -56,8 +130,11 @@ class CurrentUser:
             "user_id": self.id,
             "email": self.email,
             "role": self.role,
+            "role_id": self.role_id,
+            "branch_id": self.branch_id,
             "tenant_id": self.tenant_id,
-            "subscription_tier": self.subscription_tier
+            "subscription_tier": self.subscription_tier,
+            "permission_count": len(self.permission_codes),
         }
 
 
@@ -229,6 +306,56 @@ def require_tier(allowed_tiers: list[str]):
     return tier_checker
 
 
+def _extract_add_on_codes(raw_add_ons: Any) -> set[str]:
+    candidate = raw_add_ons
+    if isinstance(candidate, str):
+        try:
+            candidate = json.loads(candidate)
+        except Exception:
+            return set()
+
+    if not isinstance(candidate, list):
+        return set()
+
+    codes: set[str] = set()
+    for item in candidate:
+        if not isinstance(item, dict):
+            continue
+        code = item.get("code")
+        if isinstance(code, str) and code.strip():
+            codes.add(code.strip())
+    return codes
+
+
+def require_add_on(required_add_on: str):
+    """Dependency factory to require a purchased add-on for a feature."""
+
+    async def add_on_checker(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
+        in_context_codes = _extract_add_on_codes(current_user.active_add_ons)
+        if required_add_on in in_context_codes:
+            return current_user
+
+        try:
+            db = get_supabase_admin_client()
+            tenant_response = db.table("tenants").select("active_add_ons").eq(
+                "id", current_user.tenant_id
+            ).single().execute()
+            db_codes = _extract_add_on_codes((tenant_response.data or {}).get("active_add_ons"))
+            if required_add_on in db_codes:
+                return current_user
+        except Exception:
+            logger.debug(
+                "Failed to resolve add-ons for tenant_id=%s", current_user.tenant_id
+            )
+
+        raise AuthorizationError(
+            f"This feature requires add-on '{required_add_on}'. "
+            "Please update your subscription to continue."
+        )
+
+    return add_on_checker
+
+
 def require_owner(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
     """
     Dependency to require tenant owner role
@@ -261,3 +388,29 @@ def require_admin(current_user: CurrentUser = Depends(get_current_user)) -> Curr
     if not current_user.is_admin():
         raise AuthorizationError("This action requires admin or owner privileges")
     return current_user
+
+
+def require_enterprise_admin(
+    current_user: CurrentUser = Depends(require_admin),
+) -> CurrentUser:
+    """Require both enterprise tier and admin privileges."""
+    if not current_user.has_tier(["enterprise"]):
+        raise AuthorizationError(
+            "This action requires an active enterprise subscription"
+        )
+    return current_user
+
+
+def require_permission(permission_code: str):
+    """Dependency factory for permission-based authorization checks."""
+
+    async def permission_checker(
+        current_user: CurrentUser = Depends(get_current_user),
+    ) -> CurrentUser:
+        if not current_user.has_permission(permission_code):
+            raise AuthorizationError(
+                f"This action requires permission '{permission_code}'"
+            )
+        return current_user
+
+    return permission_checker

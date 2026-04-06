@@ -23,6 +23,21 @@ logger = logging.getLogger(__name__)
 DOC_PATH_PREFIXES = ("/api/docs", "/api/redoc", "/api/openapi.json")
 
 
+def _json_safe_validation_errors(errors: list[dict]) -> list[dict]:
+    """Convert non-serializable objects in validation errors into strings."""
+    safe_errors = []
+    for error in errors:
+        safe_error = dict(error)
+        ctx = safe_error.get("ctx")
+        if isinstance(ctx, dict):
+            safe_ctx = {}
+            for key, value in ctx.items():
+                safe_ctx[key] = str(value) if isinstance(value, Exception) else value
+            safe_error["ctx"] = safe_ctx
+        safe_errors.append(safe_error)
+    return safe_errors
+
+
 def _resolve_csp() -> str:
     if settings.ENVIRONMENT == "production":
         return settings.SECURITY_CSP_PROD
@@ -126,9 +141,9 @@ async def add_process_time_header(request: Request, call_next):
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Handle validation errors with detailed messages"""
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content={
-            "detail": exc.errors(),
+            "detail": _json_safe_validation_errors(exc.errors()),
             "message": "Validation error occurred"
         }
     )

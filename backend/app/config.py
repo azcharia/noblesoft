@@ -78,6 +78,15 @@ class Settings(BaseSettings):
     MIDTRANS_MERCHANT_ID: str = ""
     MIDTRANS_IS_PRODUCTION: bool = False
 
+    # Billing Catalog Configuration
+    BILLING_CURRENCY: str = "IDR"
+    BILLING_ANNUAL_DISCOUNT_PERCENT: int = 15
+    BILLING_PRICE_BASIC_MONTHLY: int = 499000
+    BILLING_PRICE_PRO_MONTHLY: int = 1499000
+    BILLING_PRICE_ENTERPRISE_MONTHLY: int = 3999000
+    BILLING_ADDON_AI_AGENT_MONTHLY: int = 299000
+    BILLING_ADDON_AUTOMATION_PACK_MONTHLY: int = 499000
+
     @property
     def midtrans_api_base_url(self) -> str:
         """Resolve Midtrans API base URL based on environment mode."""
@@ -207,6 +216,14 @@ class Settings(BaseSettings):
         if normalized not in allowed_stores:
             raise ValueError("RATE_LIMIT_STORE must be one of: memory, redis")
         return normalized
+
+    @field_validator("BILLING_ANNUAL_DISCOUNT_PERCENT")
+    @classmethod
+    def validate_billing_discount_percent(cls, value: int) -> int:
+        """Keep annual discount in a sensible range."""
+        if value < 0 or value > 90:
+            raise ValueError("BILLING_ANNUAL_DISCOUNT_PERCENT must be between 0 and 90")
+        return value
 
     @model_validator(mode="after")
     def validate_environment_safety(self):

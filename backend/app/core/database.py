@@ -2,13 +2,25 @@
 Supabase Database Client Initialization
 Provides both client and admin-level database access
 """
-from supabase import create_client, Client
-from typing import Optional
 import logging
+from typing import Optional
+
+import httpx
+from supabase import Client, ClientOptions, create_client
 
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _build_supabase_options() -> ClientOptions:
+    """Configure Supabase clients with an explicit httpx client."""
+    http_client = httpx.Client(
+        timeout=httpx.Timeout(30.0),
+        follow_redirects=True,
+        http2=True,
+    )
+    return ClientOptions(httpx_client=http_client)
 
 
 class SupabaseClient:
@@ -30,7 +42,8 @@ class SupabaseClient:
             try:
                 cls._client = create_client(
                     supabase_url=settings.SUPABASE_URL,
-                    supabase_key=settings.SUPABASE_ANON_KEY
+                    supabase_key=settings.SUPABASE_ANON_KEY,
+                    options=_build_supabase_options(),
                 )
                 logger.info("✅ Supabase client initialized (anon key)")
             except Exception as e:
@@ -53,7 +66,8 @@ class SupabaseClient:
             try:
                 cls._admin_client = create_client(
                     supabase_url=settings.SUPABASE_URL,
-                    supabase_key=settings.SUPABASE_SERVICE_ROLE_KEY
+                    supabase_key=settings.SUPABASE_SERVICE_ROLE_KEY,
+                    options=_build_supabase_options(),
                 )
                 logger.info("✅ Supabase admin client initialized (service role key)")
             except Exception as e:

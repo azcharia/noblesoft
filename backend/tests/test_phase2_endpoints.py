@@ -141,6 +141,25 @@ def test_list_users_success(monkeypatch: pytest.MonkeyPatch, override_current_us
     assert payload["users"][0]["email"] == "member@noblesoft.test"
 
 
+def test_list_users_include_inactive_forwarded(monkeypatch: pytest.MonkeyPatch, override_current_user):
+    override_current_user("admin")
+    called: dict[str, bool] = {"include_inactive": False}
+
+    async def mock_list_tenant_users(self, current_user, include_inactive=False):
+        called["include_inactive"] = include_inactive
+        return {
+            "users": [_user_payload()],
+            "total": 1,
+        }
+
+    monkeypatch.setattr(TenantService, "list_tenant_users", mock_list_tenant_users)
+
+    response = client.get("/api/v1/users?include_inactive=true")
+
+    assert response.status_code == 200
+    assert called["include_inactive"] is True
+
+
 def test_invite_user_forbidden_for_member(override_current_user):
     override_current_user("member")
 
@@ -154,6 +173,21 @@ def test_invite_user_forbidden_for_member(override_current_user):
     )
 
     assert response.status_code == 403
+
+
+def test_invite_user_invalid_email_returns_422(override_current_user):
+    override_current_user("admin")
+
+    response = client.post(
+        "/api/v1/users/invite",
+        json={
+            "email": "invalid-email",
+            "full_name": "Broken Email",
+            "role": "member",
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_invite_user_success(monkeypatch: pytest.MonkeyPatch, override_current_user):
@@ -181,6 +215,73 @@ def test_invite_user_success(monkeypatch: pytest.MonkeyPatch, override_current_u
     assert payload["temporary_password"] == "temp-pass-123"
 
 
+def test_invite_user_duplicate_email(monkeypatch: pytest.MonkeyPatch, override_current_user):
+    override_current_user("admin")
+
+    async def mock_invite_tenant_user(self, payload, current_user):
+        raise ValueError("User with email 'new@noblesoft.test' already exists")
+
+    monkeypatch.setattr(TenantService, "invite_tenant_user", mock_invite_tenant_user)
+
+    response = client.post(
+        "/api/v1/users/invite",
+        json={
+            "email": "new@noblesoft.test",
+            "full_name": "New User",
+            "role": "member",
+        },
+    )
+
+    assert response.status_code == 400
+    assert "already exists" in response.json()["detail"]
+
+
+def test_invite_user_seat_limit_reached(monkeypatch: pytest.MonkeyPatch, override_current_user):
+    override_current_user("admin")
+
+    async def mock_invite_tenant_user(self, payload, current_user):
+        raise ValueError("Tenant user limit has been reached")
+
+    monkeypatch.setattr(TenantService, "invite_tenant_user", mock_invite_tenant_user)
+
+    response = client.post(
+        "/api/v1/users/invite",
+        json={
+            "email": "new@noblesoft.test",
+            "full_name": "New User",
+            "role": "member",
+        },
+    )
+
+    assert response.status_code == 400
+    assert "Tenant user limit has been reached" in response.json()["detail"]
+
+
+def test_invite_user_without_temporary_password(monkeypatch: pytest.MonkeyPatch, override_current_user):
+    override_current_user("admin")
+
+    async def mock_invite_tenant_user(self, payload, current_user):
+        return {
+            "user": _user_payload(),
+            "temporary_password": None,
+        }
+
+    monkeypatch.setattr(TenantService, "invite_tenant_user", mock_invite_tenant_user)
+
+    response = client.post(
+        "/api/v1/users/invite",
+        json={
+            "email": "new@noblesoft.test",
+            "full_name": "New User",
+            "role": "member",
+            "include_temporary_password": False,
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["temporary_password"] is None
+
+
 def test_deactivate_user_not_found(monkeypatch: pytest.MonkeyPatch, override_current_user):
     override_current_user("admin")
 
@@ -192,6 +293,79 @@ def test_deactivate_user_not_found(monkeypatch: pytest.MonkeyPatch, override_cur
     response = client.delete("/api/v1/users/unknown-user")
 
     assert response.status_code == 404
+
+
+def test_deactivate_user_success(monkeypatch: pytest.MonkeyPatch, override_current_user):
+    override_current_user("admin")
+
+    async def mock_deactivate_tenant_user(self, user_id, current_user):
+        return {"user_id": user_id, "deactivated": True}
+
+    monkeypatch.setattr(TenantService, "deactivate_tenant_user", mock_deactivate_tenant_user)
+
+    response = client.delete("/api/v1/users/user-2")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["deactivated"] is True
+
+
+def test_deactivate_user_forbidden_for_member(override_current_user):
+    override_current_user("member")
+
+    response = client.delete("/api/v1/users/user-2")
+
+    assert response.status_code == 403
+
+
+def test_reactivate_user_success(monkeypatch: pytest.MonkeyPatch, override_current_user):
+    override_current_user("admin")
+
+    async def mock_reactivate_tenant_user(self, user_id, current_user):
+        return {"user_id": user_id, "reactivated": True}
+
+    monkeypatch.setattr(TenantService, "reactivate_tenant_user", mock_reactivate_tenant_user)
+
+    response = client.post("/api/v1/users/user-2/reactivate")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["reactivated"] is True
+
+
+def test_reactivate_user_not_found(monkeypatch: pytest.MonkeyPatch, override_current_user):
+    override_current_user("admin")
+
+    async def mock_reactivate_tenant_user(self, user_id, current_user):
+        return {"user_id": user_id, "reactivated": False}
+
+    monkeypatch.setattr(TenantService, "reactivate_tenant_user", mock_reactivate_tenant_user)
+
+    response = client.post("/api/v1/users/unknown-user/reactivate")
+
+    assert response.status_code == 404
+
+
+def test_reactivate_user_seat_limit_reached(monkeypatch: pytest.MonkeyPatch, override_current_user):
+    override_current_user("admin")
+
+    async def mock_reactivate_tenant_user(self, user_id, current_user):
+        raise ValueError("Tenant user limit has been reached")
+
+    monkeypatch.setattr(TenantService, "reactivate_tenant_user", mock_reactivate_tenant_user)
+
+    response = client.post("/api/v1/users/user-2/reactivate")
+
+    assert response.status_code == 400
+    assert "Tenant user limit has been reached" in response.json()["detail"]
+
+
+def test_reactivate_user_forbidden_for_member(override_current_user):
+    override_current_user("member")
+
+    response = client.post("/api/v1/users/user-2/reactivate")
+
+    assert response.status_code == 403
 
 
 def test_billing_status_success(monkeypatch: pytest.MonkeyPatch, override_current_user):
@@ -213,6 +387,43 @@ def test_billing_status_success(monkeypatch: pytest.MonkeyPatch, override_curren
 
     assert response.status_code == 200
     assert response.json()["subscription_tier"] == "pro"
+
+
+def test_billing_catalog_success(monkeypatch: pytest.MonkeyPatch, override_current_user):
+    override_current_user("owner")
+
+    def mock_get_billing_catalog(self):
+        return {
+            "currency": "IDR",
+            "annual_discount_percent": 15,
+            "plans": [
+                {
+                    "tier": "basic",
+                    "monthly_price": "499000.00",
+                    "annual_price": "5089800.00",
+                    "annual_discount_percent": 15,
+                    "max_users": 5,
+                }
+            ],
+            "add_ons": [
+                {
+                    "code": "ai_agent_pack",
+                    "name": "AI Agent Pack",
+                    "description": "Additional specialist AI agents for advanced workflows.",
+                    "monthly_price": "299000.00",
+                    "annual_price": "3049800.00",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(BillingService, "get_billing_catalog", mock_get_billing_catalog)
+
+    response = client.get("/api/v1/billing/catalog")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["currency"] == "IDR"
+    assert payload["plans"][0]["tier"] == "basic"
 
 
 def test_create_midtrans_transaction_success(monkeypatch: pytest.MonkeyPatch, override_current_user):

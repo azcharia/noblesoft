@@ -1,11 +1,11 @@
 """Pydantic models for tenant-scoped user management."""
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-UserRole = Literal["owner", "admin", "member"]
+UserRole = str
 
 
 class TenantUserResponse(BaseModel):
@@ -16,6 +16,8 @@ class TenantUserResponse(BaseModel):
     email: str
     full_name: Optional[str] = None
     role: UserRole = "member"
+    role_id: Optional[str] = None
+    branch_id: Optional[str] = None
     is_active: bool = True
     created_at: datetime
     updated_at: datetime
@@ -28,6 +30,14 @@ class TenantUserResponse(BaseModel):
         normalized = value.strip().lower()
         if "@" not in normalized:
             raise ValueError("Invalid email format")
+        return normalized
+
+    @field_validator("role")
+    @classmethod
+    def _validate_role(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if not normalized:
+            raise ValueError("Role cannot be empty")
         return normalized
 
 
@@ -60,6 +70,14 @@ class TenantUserInviteRequest(BaseModel):
             raise ValueError("Invalid email format")
         return normalized
 
+    @field_validator("role")
+    @classmethod
+    def _normalize_role(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if not normalized:
+            raise ValueError("Role cannot be empty")
+        return normalized
+
 
 class TenantUserInviteResponse(BaseModel):
     """Invite result response including created user details."""
@@ -73,3 +91,10 @@ class TenantUserDeactivateResponse(BaseModel):
 
     user_id: str
     deactivated: bool
+
+
+class TenantUserReactivateResponse(BaseModel):
+    """Soft-reactivation response payload."""
+
+    user_id: str
+    reactivated: bool

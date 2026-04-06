@@ -17,6 +17,93 @@ logger = logging.getLogger(__name__)
 _jwks_client: Optional[PyJWKClient] = None
 
 
+def _legacy_permission_codes(role: str) -> list[str]:
+    role_map: dict[str, set[str]] = {
+        "owner": {"*"},
+        "admin": {
+            "users.read",
+            "users.invite",
+            "users.status",
+            "roles.read",
+            "permissions.read",
+            "branches.read",
+            "branches.write",
+            "audit.read",
+            "products.read",
+            "products.write",
+            "invoices.read",
+            "invoices.write",
+            "chat.use",
+        },
+        "member": {
+            "products.read",
+            "products.write",
+            "invoices.read",
+            "invoices.write",
+            "chat.use",
+        },
+    }
+    return sorted(role_map.get(role, set()))
+
+
+def _resolve_governance_context(
+    db,
+    user_id: str,
+    tenant_id: str,
+    legacy_role: str,
+) -> Dict[str, Any]:
+    """
+    Resolve governance metadata with graceful fallback when migration is not yet applied.
+    """
+    context: Dict[str, Any] = {
+        "role_id": None,
+        "branch_id": None,
+        "permission_codes": _legacy_permission_codes(legacy_role),
+        "roles": None,
+    }
+
+    try:
+        user_extension = db.table("users").select(
+            "role_id, branch_id"
+        ).eq("id", user_id).single().execute()
+        extension_data = user_extension.data or {}
+        context["role_id"] = extension_data.get("role_id")
+        context["branch_id"] = extension_data.get("branch_id")
+    except Exception as exc:
+        logger.debug("Governance user extensions unavailable: %s", exc)
+        return context
+
+    role_id = context.get("role_id")
+    if not role_id:
+        return context
+
+    try:
+        role_response = db.table("roles").select(
+            "id, tenant_id, code, name, is_active"
+        ).eq("id", role_id).eq("tenant_id", tenant_id).single().execute()
+        role_data = role_response.data or None
+        if role_data:
+            context["roles"] = role_data
+
+        permission_response = db.table("role_permissions").select(
+            "permissions(code)"
+        ).eq("role_id", role_id).execute()
+
+        permission_codes: list[str] = []
+        for row in (permission_response.data or []):
+            permission_obj = row.get("permissions") or {}
+            permission_code = permission_obj.get("code") if isinstance(permission_obj, dict) else None
+            if isinstance(permission_code, str) and permission_code.strip():
+                permission_codes.append(permission_code.strip())
+
+        if permission_codes:
+            context["permission_codes"] = sorted(set(permission_codes))
+    except Exception as exc:
+        logger.debug("Governance role/permissions unavailable: %s", exc)
+
+    return context
+
+
 def _get_jwks_client() -> PyJWKClient:
     """Lazily initialize JWKS client for Supabase asymmetric JWT verification."""
     global _jwks_client
@@ -186,6 +273,14 @@ async def get_user_from_database(user_id: str) -> Dict[str, Any]:
                 trial_end_dt = datetime.fromisoformat(trial_end.replace("Z", "+00:00"))
                 if trial_end_dt < datetime.now(timezone.utc):
                     raise AuthenticationError("Trial period has expired")
+
+        governance_context = _resolve_governance_context(
+            db=db,
+            user_id=user_id,
+            tenant_id=str(user.get("tenant_id") or ""),
+            legacy_role=str(user.get("role") or "member"),
+        )
+        user.update(governance_context)
         
         return user
     

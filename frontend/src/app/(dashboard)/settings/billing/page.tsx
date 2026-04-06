@@ -6,8 +6,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { PageAlert } from '@/components/dashboard/PageAlert'
 import { PageHeader } from '@/components/dashboard/PageHeader'
+import { BillingCheckoutPanel } from '@/components/dashboard/BillingCheckoutPanel'
 
 export default async function BillingPage() {
   const supabase = createClient()
@@ -78,14 +78,13 @@ export default async function BillingPage() {
               <p className="mt-1 font-medium text-foreground">{tenant?.max_users ?? '-'}</p>
             </div>
           </div>
-
-          <PageAlert
-            className="mt-5"
-            variant="info"
-            message="Upgrade flow payment gateway belum diimplementasikan di frontend. Halaman ini menampilkan status paket aktif dari data tenant."
-          />
         </CardContent>
       </Card>
+
+      <BillingCheckoutPanel
+        currentTier={tenant?.subscription_tier || 'basic'}
+        currentCompanyName={tenant?.company_name || 'NobleSoft Tenant'}
+      />
     </div>
   )
 }

@@ -118,7 +118,13 @@ export default async function SettingsPage() {
             </div>
             </dl>
 
-            <div className="mt-5">
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Link href="/settings/team">
+                <Button variant="outline">Manage Team</Button>
+              </Link>
+              <Link href="/settings/governance">
+                <Button variant="outline">Open Governance</Button>
+              </Link>
               <Link href="/settings/billing">
                 <Button variant="outline">Open Billing</Button>
               </Link>
