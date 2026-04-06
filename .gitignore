@@ -14,6 +14,9 @@ backend/venv/
 frontend/node_modules/
 frontend/.next/
 
+# TypeScript build cache
+*.tsbuildinfo
+
 # Documentation - Internal/Architecture
 ENVIRONMENT_SECURITY.md
 modelbisnisnoblesoft.md
