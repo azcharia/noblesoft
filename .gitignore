@@ -37,3 +37,15 @@ PHASE_5_COMPLETE.md
 *.swp
 *.swo
 
+# Audit and Completion Reports
+AUDIT_REPORT.md
+GITHUB_SECURITY_CHECKLIST.md
+PHASE_5_DELTA_COMPLETION.md
+completion+codereview+plan.md
+phase 5 healthcheck audit.md
+phase6-8.md
+
+# Scratch scripts and local documents
+Proposal P2MW NobleSoft 2026.pdf
+extract_pdf.py
+extract_pdf_text.py

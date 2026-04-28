@@ -14,8 +14,44 @@ pip install -r requirements.txt
 
 1. Go to your Supabase project
 2. Open SQL Editor
-3. Copy and run the entire SQL schema from `PHASE_1_ARCHITECTURE.md` (section 2)
-4. This creates all tables, RLS policies, and indexes
+3. Execute SQL files in this exact order:
+
+  - `supabase_setup.sql` (base schema + RLS helper functions)
+  - `supabase_phase4_governance.sql` (roles/permissions/branches prerequisites)
+  - `supabase_phase5_enterprise_engagement.sql` (Onboarding/Support/QBR tables + permission seeds)
+
+4. Verify Phase 5 Operations tables are present:
+
+  ```sql
+  SELECT table_name
+  FROM information_schema.tables
+  WHERE table_schema = 'public'
+    AND table_name IN (
+      'onboarding_items',
+      'support_tickets',
+      'support_ticket_comments',
+      'qbr_cycles',
+      'qbr_goals'
+    )
+  ORDER BY table_name;
+  ```
+
+5. Verify seeded permissions exist:
+
+  ```sql
+  SELECT code
+  FROM permissions
+  WHERE code IN (
+      'onboarding.read',
+      'onboarding.write',
+      'support.read',
+      'support.write',
+      'support.assign',
+      'qbr.read',
+      'qbr.write'
+  )
+  ORDER BY code;
+  ```
 
 ### Step 3: Configure Environment
 

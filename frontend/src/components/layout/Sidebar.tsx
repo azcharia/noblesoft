@@ -16,6 +16,9 @@ import {
   BarChart3,
   Lock,
   Sparkles,
+  ListChecks,
+  LifeBuoy,
+  Target,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
@@ -62,6 +65,27 @@ const navItems: NavItem[] = [
     icon: BarChart3,
     requiredTier: ['pro', 'enterprise'],
     badge: 'Pro',
+  },
+  {
+    name: 'Onboarding',
+    href: '/operations/onboarding',
+    icon: ListChecks,
+    requiredTier: ['enterprise'],
+    badge: 'Ent',
+  },
+  {
+    name: 'Support',
+    href: '/operations/support',
+    icon: LifeBuoy,
+    requiredTier: ['enterprise'],
+    badge: 'Ent',
+  },
+  {
+    name: 'QBR',
+    href: '/operations/qbr',
+    icon: Target,
+    requiredTier: ['enterprise'],
+    badge: 'Ent',
   },
   {
     name: 'Settings',

@@ -4,6 +4,7 @@
  */
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { OfflineBanner } from '@/components/OfflineBanner'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Header } from '@/components/layout/Header'
 
@@ -59,7 +60,9 @@ export default async function DashboardLayout({
   }
   
   return (
-    <div className="flex h-screen bg-background">
+    <>
+      <OfflineBanner />
+      <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <Sidebar
         user={userWithTenant}
@@ -79,6 +82,7 @@ export default async function DashboardLayout({
           {children}
         </main>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

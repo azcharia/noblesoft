@@ -35,6 +35,13 @@ LEGACY_ROLE_PERMISSION_MAP: dict[str, set[str]] = {
         "invoices.read",
         "invoices.write",
         "chat.use",
+        "onboarding.read",
+        "onboarding.write",
+        "support.read",
+        "support.write",
+        "support.assign",
+        "qbr.read",
+        "qbr.write",
     },
     "member": {
         "products.read",
@@ -399,6 +406,21 @@ def require_enterprise_admin(
             "This action requires an active enterprise subscription"
         )
     return current_user
+
+
+def require_enterprise_permission(permission_code: str):
+    """Dependency factory requiring enterprise admin and explicit permission."""
+
+    async def enterprise_permission_checker(
+        current_user: CurrentUser = Depends(require_enterprise_admin),
+    ) -> CurrentUser:
+        if not current_user.has_permission(permission_code):
+            raise AuthorizationError(
+                f"This action requires permission '{permission_code}'"
+            )
+        return current_user
+
+    return enterprise_permission_checker
 
 
 def require_permission(permission_code: str):

@@ -34,6 +34,13 @@ def _legacy_permission_codes(role: str) -> list[str]:
             "invoices.read",
             "invoices.write",
             "chat.use",
+            "onboarding.read",
+            "onboarding.write",
+            "support.read",
+            "support.write",
+            "support.assign",
+            "qbr.read",
+            "qbr.write",
         },
         "member": {
             "products.read",

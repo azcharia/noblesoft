@@ -330,6 +330,158 @@ export const apiClient = {
       },
     },
   },
+
+  // Operations API
+  operations: {
+    onboarding: {
+      list: () =>
+        apiRequest<OnboardingChecklistResponse>('/operations/onboarding', { method: 'GET' }),
+
+      createItem: (data: OnboardingItemCreateRequest) =>
+        apiRequest<OnboardingItem>('/operations/onboarding/items', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+
+      updateItem: (itemId: string, data: OnboardingItemUpdateRequest) =>
+        apiRequest<OnboardingItem>(`/operations/onboarding/items/${encodeURIComponent(itemId)}`, {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        }),
+
+      completeItem: (itemId: string) =>
+        apiRequest<OnboardingItem>(`/operations/onboarding/items/${encodeURIComponent(itemId)}/complete`, {
+          method: 'POST',
+        }),
+    },
+
+    support: {
+      listTickets: (params?: {
+        page?: number
+        page_size?: number
+        status?: string
+        priority?: string
+      }) => {
+        const queryParams = new URLSearchParams()
+        if (params) {
+          Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+              queryParams.append(key, String(value))
+            }
+          })
+        }
+        return apiRequest<SupportTicketListResponse>(
+          `/operations/support/tickets?${queryParams.toString()}`,
+          { method: 'GET' }
+        )
+      },
+
+      getTicket: (ticketId: string) =>
+        apiRequest<SupportTicketDetailResponse>(`/operations/support/tickets/${encodeURIComponent(ticketId)}`, {
+          method: 'GET',
+        }),
+
+      createTicket: (data: SupportTicketCreateRequest) =>
+        apiRequest<SupportTicket>('/operations/support/tickets', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+
+      updateTicket: (ticketId: string, data: SupportTicketUpdateRequest) =>
+        apiRequest<SupportTicket>(`/operations/support/tickets/${encodeURIComponent(ticketId)}`, {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        }),
+
+      assignTicket: (ticketId: string, data: SupportTicketAssignRequest) =>
+        apiRequest<SupportTicket>(`/operations/support/tickets/${encodeURIComponent(ticketId)}/assignee`, {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        }),
+
+      addComment: (ticketId: string, data: SupportTicketCommentCreateRequest) =>
+        apiRequest<SupportTicketComment>(`/operations/support/tickets/${encodeURIComponent(ticketId)}/comments`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+
+      getOverview: () =>
+        apiRequest<SupportOverviewResponse>('/operations/support/overview', { method: 'GET' }),
+    },
+
+    qbr: {
+      listCycles: (params?: {
+        page?: number
+        page_size?: number
+        status?: string
+      }) => {
+        const queryParams = new URLSearchParams()
+        if (params) {
+          Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+              queryParams.append(key, String(value))
+            }
+          })
+        }
+        return apiRequest<QBRCycleListResponse>(
+          `/operations/qbr/cycles?${queryParams.toString()}`,
+          { method: 'GET' }
+        )
+      },
+
+      createCycle: (data: QBRCycleCreateRequest) =>
+        apiRequest<QBRCycle>('/operations/qbr/cycles', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+
+      updateCycle: (cycleId: string, data: QBRCycleUpdateRequest) =>
+        apiRequest<QBRCycle>(`/operations/qbr/cycles/${encodeURIComponent(cycleId)}`, {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        }),
+
+      listGoals: (params?: {
+        cycle_id?: string
+        page?: number
+        page_size?: number
+      }) => {
+        const queryParams = new URLSearchParams()
+        if (params) {
+          Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+              queryParams.append(key, String(value))
+            }
+          })
+        }
+        return apiRequest<QBRGoalListResponse>(
+          `/operations/qbr/goals?${queryParams.toString()}`,
+          { method: 'GET' }
+        )
+      },
+
+      createGoal: (data: QBRGoalCreateRequest) =>
+        apiRequest<QBRGoal>('/operations/qbr/goals', {
+          method: 'POST',
+          body: JSON.stringify(data),
+        }),
+
+      updateGoal: (goalId: string, data: QBRGoalUpdateRequest) =>
+        apiRequest<QBRGoal>(`/operations/qbr/goals/${encodeURIComponent(goalId)}`, {
+          method: 'PATCH',
+          body: JSON.stringify(data),
+        }),
+
+      getDashboard: (cycleId?: string) => {
+        const query = cycleId
+          ? `?${new URLSearchParams({ cycle_id: cycleId }).toString()}`
+          : ''
+        return apiRequest<QBRDashboardResponse>(`/operations/qbr/dashboard${query}`, {
+          method: 'GET',
+        })
+      },
+    },
+  },
   
   // AI Chat API
   chat: {
@@ -633,6 +785,243 @@ export interface GovernanceAuditLogListResponse {
   page: number
   page_size: number
   has_more: boolean
+}
+
+export type OnboardingStatus = 'pending' | 'in_progress' | 'completed' | 'skipped'
+
+export interface OnboardingItem {
+  id: string
+  tenant_id: string
+  code: string
+  title: string
+  description?: string | null
+  category: string
+  is_required: boolean
+  status: OnboardingStatus
+  sort_order: number
+  due_date?: string | null
+  completed_at?: string | null
+  completed_by?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface OnboardingChecklistResponse {
+  items: OnboardingItem[]
+  total: number
+  completed: number
+  pending: number
+  completion_rate: number
+}
+
+export interface OnboardingItemCreateRequest {
+  code: string
+  title: string
+  description?: string
+  category?: string
+  is_required?: boolean
+  status?: OnboardingStatus
+  sort_order?: number
+  due_date?: string
+}
+
+export interface OnboardingItemUpdateRequest {
+  title?: string
+  description?: string
+  category?: string
+  is_required?: boolean
+  status?: OnboardingStatus
+  sort_order?: number
+  due_date?: string
+}
+
+export type SupportPriority = 'p1' | 'p2' | 'p3'
+export type SupportTicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed'
+
+export interface SupportTicket {
+  id: string
+  tenant_id: string
+  ticket_number: string
+  title: string
+  description?: string | null
+  category: string
+  priority: SupportPriority
+  status: SupportTicketStatus
+  requester_user_id?: string | null
+  assignee_user_id?: string | null
+  first_response_at?: string | null
+  resolved_at?: string | null
+  sla_response_deadline: string
+  sla_resolution_deadline: string
+  is_sla_response_breached: boolean
+  is_sla_resolution_breached: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface SupportTicketListResponse {
+  tickets: SupportTicket[]
+  total: number
+  page: number
+  page_size: number
+  has_more: boolean
+}
+
+export interface SupportTicketCreateRequest {
+  title: string
+  description?: string
+  category?: string
+  priority?: SupportPriority
+  assignee_user_id?: string
+}
+
+export interface SupportTicketUpdateRequest {
+  title?: string
+  description?: string
+  category?: string
+  priority?: SupportPriority
+  status?: SupportTicketStatus
+  assignee_user_id?: string
+}
+
+export interface SupportTicketAssignRequest {
+  assignee_user_id: string
+}
+
+export interface SupportTicketCommentCreateRequest {
+  content: string
+  is_internal?: boolean
+}
+
+export interface SupportTicketComment {
+  id: string
+  tenant_id: string
+  ticket_id: string
+  author_user_id?: string | null
+  content: string
+  is_internal: boolean
+  created_at: string
+}
+
+export interface SupportTicketDetailResponse {
+  ticket: SupportTicket
+  comments: SupportTicketComment[]
+}
+
+export interface SupportOverviewResponse {
+  total_open: number
+  total_in_progress: number
+  total_resolved: number
+  total_closed: number
+  sla_response_breached: number
+  sla_resolution_breached: number
+}
+
+export type QBRCycleStatus = 'draft' | 'active' | 'completed'
+export type QBRGoalStatus = 'on_track' | 'at_risk' | 'off_track' | 'achieved'
+
+export interface QBRCycle {
+  id: string
+  tenant_id: string
+  quarter_code: string
+  title?: string | null
+  start_date: string
+  end_date: string
+  status: QBRCycleStatus
+  notes?: string | null
+  created_by?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface QBRCycleListResponse {
+  cycles: QBRCycle[]
+  total: number
+  page: number
+  page_size: number
+  has_more: boolean
+}
+
+export interface QBRCycleCreateRequest {
+  quarter_code: string
+  title?: string
+  start_date: string
+  end_date: string
+  status?: QBRCycleStatus
+  notes?: string
+}
+
+export interface QBRCycleUpdateRequest {
+  title?: string
+  start_date?: string
+  end_date?: string
+  status?: QBRCycleStatus
+  notes?: string
+}
+
+export interface QBRGoal {
+  id: string
+  tenant_id: string
+  cycle_id: string
+  title: string
+  description?: string | null
+  metric_name?: string | null
+  unit?: string | null
+  target_value: number
+  current_value: number
+  owner_user_id?: string | null
+  status: QBRGoalStatus
+  due_date?: string | null
+  created_at: string
+  updated_at: string
+  progress_percentage: number
+}
+
+export interface QBRGoalListResponse {
+  goals: QBRGoal[]
+  total: number
+  page: number
+  page_size: number
+  has_more: boolean
+}
+
+export interface QBRGoalCreateRequest {
+  cycle_id: string
+  title: string
+  description?: string
+  metric_name?: string
+  unit?: string
+  target_value?: number
+  current_value?: number
+  owner_user_id?: string
+  status?: QBRGoalStatus
+  due_date?: string
+}
+
+export interface QBRGoalUpdateRequest {
+  cycle_id?: string
+  title?: string
+  description?: string
+  metric_name?: string
+  unit?: string
+  target_value?: number
+  current_value?: number
+  owner_user_id?: string
+  status?: QBRGoalStatus
+  due_date?: string
+}
+
+export interface QBRMetricsSummary {
+  paid_revenue: number
+  unpaid_invoice_count: number
+  total_products: number
+  low_stock_products: number
+}
+
+export interface QBRDashboardResponse {
+  cycle?: QBRCycle | null
+  goals: QBRGoal[]
+  metrics: QBRMetricsSummary
 }
 
 export interface ChatResponse {

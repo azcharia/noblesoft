@@ -5,7 +5,18 @@ Aggregates all v1 endpoints
 from fastapi import APIRouter
 
 # Import sub-routers
-from app.api.v1 import products, invoices, chat, tenants, users, billing, governance
+from app.api.v1 import (
+    billing,
+    chat,
+    governance,
+    invoices,
+    onboarding,
+    products,
+    qbr,
+    support,
+    tenants,
+    users,
+)
 
 # Create main API router
 api_router = APIRouter()
@@ -53,6 +64,24 @@ api_router.include_router(
     tags=["Governance"]
 )
 
+api_router.include_router(
+    onboarding.router,
+    prefix="/operations/onboarding",
+    tags=["Operations Onboarding"]
+)
+
+api_router.include_router(
+    support.router,
+    prefix="/operations/support",
+    tags=["Operations Support"]
+)
+
+api_router.include_router(
+    qbr.router,
+    prefix="/operations/qbr",
+    tags=["Operations QBR"]
+)
+
 # Root endpoint
 @api_router.get("/")
 async def api_root():
@@ -69,6 +98,9 @@ async def api_root():
             "users": "/api/v1/users",
             "billing": "/api/v1/billing",
             "governance": "/api/v1/governance",
+            "operations_onboarding": "/api/v1/operations/onboarding",
+            "operations_support": "/api/v1/operations/support",
+            "operations_qbr": "/api/v1/operations/qbr",
             "docs": "/api/docs"
         }
     }

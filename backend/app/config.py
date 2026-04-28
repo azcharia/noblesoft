@@ -120,7 +120,19 @@ class Settings(BaseSettings):
     FEATURES_TRIAL: List[str] = ["dashboard", "inventory", "invoices"]
     FEATURES_BASIC: List[str] = ["dashboard", "inventory", "invoices", "payment_tracking"]
     FEATURES_PRO: List[str] = ["dashboard", "inventory", "invoices", "payment_tracking", "ai_chat", "analytics"]
-    FEATURES_ENTERPRISE: List[str] = ["dashboard", "inventory", "invoices", "payment_tracking", "ai_chat", "analytics", "multi_branch", "advanced_governance"]
+    FEATURES_ENTERPRISE: List[str] = [
+        "dashboard",
+        "inventory",
+        "invoices",
+        "payment_tracking",
+        "ai_chat",
+        "analytics",
+        "multi_branch",
+        "advanced_governance",
+        "operations_onboarding",
+        "operations_support",
+        "operations_qbr",
+    ]
     
     model_config = SettingsConfigDict(
         env_file=".env",

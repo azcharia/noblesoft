@@ -58,10 +58,26 @@ Required environment variables:
 
 ### 3. Setup Database
 
-Run the SQL schema from `PHASE_1_ARCHITECTURE.md` in your Supabase SQL Editor:
-- Enable extensions (uuid-ossp, vector)
-- Create tables (tenants, users, products, invoices, etc.)
-- Setup RLS policies
+Run SQL files in your Supabase SQL Editor with this order:
+- `supabase_setup.sql` (base schema, extensions, RLS functions)
+- `supabase_phase4_governance.sql` (roles, permissions, branches)
+- `supabase_phase5_enterprise_engagement.sql` (Onboarding, Support, QBR)
+
+Then validate critical operations tables exist:
+
+```sql
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
+    AND table_name IN (
+        'onboarding_items',
+        'support_tickets',
+        'support_ticket_comments',
+        'qbr_cycles',
+        'qbr_goals'
+    )
+ORDER BY table_name;
+```
 
 ### 4. Run Development Server
 

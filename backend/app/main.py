@@ -181,6 +181,22 @@ async def root():
         "health": "/health"
     }
 
+
+# ============================================
+# Convenience Redirects (so /docs works too)
+# ============================================
+@app.get("/docs", include_in_schema=False)
+async def redirect_docs():
+    """Redirect /docs to /api/docs for discoverability"""
+    return RedirectResponse(url="/api/docs")
+
+
+@app.get("/redoc", include_in_schema=False)
+async def redirect_redoc():
+    """Redirect /redoc to /api/redoc for discoverability"""
+    return RedirectResponse(url="/api/redoc")
+
+
 # ============================================
 # API Router Registration
 # ============================================
