@@ -66,10 +66,8 @@ export default function LoginPage() {
       {/* Main content */}
       <div className="relative z-10 w-full max-w-md">
         {/* Logo/Brand section */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-accent to-accent-secondary rounded-2xl shadow-accent mb-4">
-            <Sparkles className="w-8 h-8 text-white" />
-          </div>
+        <div className="text-center mb-8 flex flex-col items-center">
+          <img src="/logo.jpg" alt="NobleSoft Logo" className="w-16 h-16 rounded-2xl shadow-md object-cover mb-4" />
           <h1 className="text-4xl font-display mb-2 text-brand-teal">
             Noble<span className="text-brand-orange">Soft</span>
           </h1>

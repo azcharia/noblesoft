@@ -70,9 +70,7 @@ export function Sidebar({ user, tenant }: SidebarProps) {
       {/* Logo */}
       <div className="h-16 flex items-center px-6 border-b border-border/50">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-brand-blue to-brand-teal relative overflow-hidden rounded-lg flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
+          <img src="/logo.jpg" alt="NobleSoft Logo" className="w-8 h-8 rounded-lg object-cover" />
           <h1 className="text-xl font-display text-brand-teal">
             Noble<span className="text-brand-orange">Soft</span>
           </h1>

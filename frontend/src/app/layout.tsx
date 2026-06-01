@@ -23,6 +23,11 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'NobleSoft - AI Business Management',
   description: 'B2B SaaS Enterprise AI Operating System for Indonesian UMKM',
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/logo.jpg',
+  },
 };
 
 export default function RootLayout({

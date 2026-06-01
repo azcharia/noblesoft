@@ -86,10 +86,8 @@ export default function RegisterPage() {
       {/* Main content */}
       <div className="relative z-10 w-full max-w-md">
         {/* Logo/Brand section */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-accent to-accent-secondary rounded-2xl shadow-accent mb-3">
-            <Sparkles className="w-7 h-7 text-white" />
-          </div>
+        <div className="text-center mb-6 flex flex-col items-center">
+          <img src="/logo.jpg" alt="NobleSoft Logo" className="w-14 h-14 rounded-2xl shadow-md object-cover mb-3" />
           <h1 className="text-3xl font-display mb-1 text-brand-teal">
             Noble<span className="text-brand-orange">Soft</span>
           </h1>
