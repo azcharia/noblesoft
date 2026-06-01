@@ -148,14 +148,14 @@ export function ChatInterface({ noBorder = false }: ChatInterfaceProps) {
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {messages.length === 0 ? (
           // Empty state
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-accent shadow-accent">
-              <Sparkles className="w-8 h-8 text-white" />
+          <div className="flex flex-col items-center justify-center h-full text-center py-2">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-accent shadow-accent">
+              <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <h3 className="mb-2 text-xl font-semibold text-foreground">
+            <h3 className="mb-1 text-lg font-semibold text-foreground">
               Asisten AI Toko
             </h3>
-            <p className="mb-8 max-w-md text-muted-foreground">
+            <p className="mb-4 max-w-md text-sm text-muted-foreground">
               Tanyakan apa saja tentang stok barang, nota, dan data toko Anda.
               AI akan menjawab berdasarkan data aktual toko Anda.
             </p>

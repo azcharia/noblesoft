@@ -1,17 +1,16 @@
 import type { Metadata } from 'next';
-import { Inter, Calistoga, JetBrains_Mono } from 'next/font/google';
+import { Montserrat, Open_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 
-const inter = Inter({ 
+const openSans = Open_Sans({ 
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-open-sans',
   display: 'swap',
 });
 
-const calistoga = Calistoga({ 
-  weight: '400',
+const montserrat = Montserrat({ 
   subsets: ['latin'],
-  variable: '--font-calistoga',
+  variable: '--font-montserrat',
   display: 'swap',
 });
 
@@ -32,8 +31,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${calistoga.variable} ${jetbrainsMono.variable}`}>
-      <body className={inter.className}>{children}</body>
+    <html lang="en" className={`${openSans.variable} ${montserrat.variable} ${jetbrainsMono.variable}`}>
+      <body className={openSans.className}>{children}</body>
     </html>
   );
 }

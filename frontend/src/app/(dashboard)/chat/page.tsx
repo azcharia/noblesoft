@@ -16,7 +16,7 @@ export default async function ChatPage() {
   }
   
   return (
-    <div className="h-[calc(100vh-120px)] min-h-[400px] flex flex-col gap-4 overflow-hidden">
+    <div className="h-[calc(100vh-150px)] lg:h-[calc(100vh-175px)] min-h-[400px] flex flex-col gap-4 overflow-hidden">
       <PageHeader
         label="Asisten Pintar"
         title="Obrolan AI Toko"

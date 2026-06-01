@@ -57,8 +57,9 @@ const config: Config = {
         }
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-calistoga)', 'Georgia', 'serif'],
+        sans: ['var(--font-open-sans)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-montserrat)', 'sans-serif'],
+        ui: ['var(--font-montserrat)', 'sans-serif'],
         mono: ['var(--font-jetbrains)', 'monospace'],
       },
       borderRadius: {

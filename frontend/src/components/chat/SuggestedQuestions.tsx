@@ -28,9 +28,9 @@ export function SuggestedQuestions({ suggestions, onSelect }: SuggestedQuestions
             key={index}
             variant="outline"
             onClick={() => onSelect(suggestion)}
-            className="h-auto justify-start border-border/80 px-4 py-3 text-left hover:border-accent/30 hover:bg-accent/5"
+            className="h-auto justify-start border-border/80 px-3.5 py-2 text-left hover:border-accent/30 hover:bg-accent/5"
           >
-            <span className="text-sm text-foreground">{suggestion}</span>
+            <span className="text-xs md:text-sm text-foreground">{suggestion}</span>
           </Button>
         ))}
       </div>

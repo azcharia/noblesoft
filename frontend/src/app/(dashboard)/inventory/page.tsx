@@ -176,7 +176,7 @@ export default function InventoryPage() {
             </Button>
             <Button className="w-full gap-2 sm:w-auto bg-brand-orange hover:bg-brand-orange/90 text-white border-none shadow-sm" onClick={openCreateForm}>
               <Plus className="w-4 h-4" />
-              {showCreateForm && !editingId ? 'Tutup Formulir' : '+ Tambah Barang Baru'}
+              {showCreateForm && !editingId ? 'Tutup Formulir' : 'Tambah Barang Baru'}
             </Button>
           </div>
         }
