@@ -117,3 +117,18 @@ async def update_tenant_ai_settings(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+
+
+@router.post(
+    "/current/ai-settings/test",
+    summary="Test current or new tenant's AI settings",
+)
+async def test_tenant_ai_settings(
+    payload: TenantAISettingsUpdate,
+    current_user: CurrentUser = Depends(require_owner),
+):
+    service = TenantService()
+    try:
+        return await service.test_tenant_ai_settings(payload, current_user)
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))

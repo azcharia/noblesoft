@@ -64,13 +64,30 @@ export default function AISettingsPage() {
         temperature: parseFloat(temperature.toFixed(2)),
       };
 
+      // 1. Perform instant API key validation (ping test)
+      setSuccess('Menguji koneksi API...');
+      const testResult = await apiClient.post<{ success: boolean; message: string }>(
+        '/tenants/current/ai-settings/test',
+        payload
+      );
+
+      if (!testResult.success) {
+        setSuccess('');
+        setError(testResult.message || 'Uji koneksi ke Groq API gagal. Silakan periksa kembali API Key Anda.');
+        setSaving(false);
+        return;
+      }
+
+      // 2. Save settings if ping test is successful
+      setSuccess('Koneksi berhasil! Menyimpan pengaturan...');
       const updated = await apiClient.patch<AISettings>('/tenants/current/ai-settings', payload);
       setSettings(updated);
-      setSuccess('Pengaturan AI berhasil diperbarui!');
+      setSuccess('Pengaturan AI berhasil divalidasi dan diperbarui!');
       
       // Mask key again after visual update
       setApiKey(updated.api_key || '');
     } catch (err: any) {
+      setSuccess('');
       setError(err.message || 'Gagal menyimpan pengaturan AI.');
     } finally {
       setSaving(false);

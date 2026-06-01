@@ -470,9 +470,9 @@ def test_resolve_rag_top_k_scales_by_intent():
     product_top_k = service._resolve_rag_top_k("Cek stok laptop terbaru")
     mixed_top_k = service._resolve_rag_top_k("Bandingkan invoice unpaid dengan stok laptop di web")
 
-    assert invoice_top_k >= 14
-    assert product_top_k >= 12
-    assert mixed_top_k >= 18
+    assert invoice_top_k >= 5
+    assert product_top_k >= 4
+    assert mixed_top_k >= 6
 
 
 def test_execute_manager_worker_uses_dynamic_top_k(monkeypatch: pytest.MonkeyPatch):
@@ -498,7 +498,7 @@ def test_execute_manager_worker_uses_dynamic_top_k(monkeypatch: pytest.MonkeyPat
 
     assert result["response"] == "ok"
     assert captured["top_k"] is not None
-    assert captured["top_k"] >= 14
+    assert captured["top_k"] >= 5
 
 
 def test_rag_engine_retrieve_documents_merges_sparse_vector_results(monkeypatch: pytest.MonkeyPatch):

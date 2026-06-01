@@ -74,11 +74,15 @@ Sebelum memulai, pastikan komputer Anda sudah terpasang:
 
 ---
 
-### Langkah 1: Siapkan Database Supabase
+### Langkah 1: Siapkan Database Supabase & Autentikasi
 1. Masuk ke dasbor Supabase Anda dan buat proyek baru.
 2. Buka menu **SQL Editor** di proyek Supabase Anda.
 3. Salin dan jalankan (Run) isi file SQL berikut secara berurutan:
    - `supabase_setup.sql` (untuk membuat tabel produk, invoice, dan data awal).
+4. **Konfigurasi Keamanan Autentikasi (Penting agar Pendaftaran Berjalan Lancar):**
+   - Di dasbor Supabase, buka menu **Authentication** -> **Providers** -> **Email**.
+   - **Nonaktifkan (Disable)** opsi **Confirm email** jika Anda ingin pengguna baru bisa langsung masuk (login) tanpa perlu memverifikasi email terlebih dahulu.
+   - **Aktifkan (Enable)** opsi **Allow public sign-ups** agar pendaftaran toko baru dari form aplikasi dapat berjalan.
 
 ---
 

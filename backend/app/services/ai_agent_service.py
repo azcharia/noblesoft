@@ -1056,10 +1056,10 @@ class AIAgentService:
         return normalized
 
     def _resolve_rag_top_k(self, query: str, assistant_mode: str = "rag") -> int:
-        """Resolve retrieval depth dynamically so invoice/mixed intents get broader context."""
+        """Resolve retrieval depth dynamically to save tokens (max 5-6 references)."""
         normalized = (query or "").strip().lower()
         if not normalized:
-            return 8
+            return 4
 
         invoice_keywords = (
             "invoice",
@@ -1099,26 +1099,26 @@ class AIAgentService:
         has_web_intent = any(keyword in normalized for keyword in web_keywords)
 
         if assistant_mode == "function_calling":
-            base_top_k = 10
+            base_top_k = 4
         elif has_invoice_intent and has_product_intent:
-            base_top_k = 18
+            base_top_k = 6
         elif has_invoice_intent:
-            base_top_k = 14
+            base_top_k = 5
         elif has_product_intent:
-            base_top_k = 12
+            base_top_k = 4
         else:
-            base_top_k = 10
+            base_top_k = 3
 
         if has_web_intent and (has_invoice_intent or has_product_intent):
-            base_top_k += 2
+            base_top_k += 1
 
         if assistant_mode == "hybrid_parallel":
-            base_top_k = max(base_top_k, 16)
+            base_top_k = max(base_top_k, 5)
 
-        if base_top_k < 6:
+        if base_top_k < 3:
+            return 3
+        if base_top_k > 6:
             return 6
-        if base_top_k > 24:
-            return 24
         return base_top_k
     
     async def _execute_function(

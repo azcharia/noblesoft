@@ -27,7 +27,7 @@ class GroqLLMClient:
         if not final_key:
             final_key = "placeholder_key"
 
-        self.client = Groq(api_key=final_key, base_url=final_url)
+        self.client = Groq(api_key=final_key, base_url=final_url, timeout=15.0)
         self.model = model or settings.GROQ_MODEL
         self.max_tokens = 2048
         self.temperature = temperature if temperature is not None else 0.2

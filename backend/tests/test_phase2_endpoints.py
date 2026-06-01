@@ -366,4 +366,54 @@ def test_reactivate_user_forbidden_for_member(override_current_user):
 
     assert response.status_code == 403
 
+
+def test_get_tenant_ai_settings_success(monkeypatch: pytest.MonkeyPatch, override_current_user):
+    override_current_user("member")
+
+    async def mock_get_tenant_ai_settings(self, current_user):
+        from datetime import datetime
+        return {
+            "tenant_id": "test-tenant-id",
+            "api_key": "gsk_te••••",
+            "base_url": "https://api.groq.com",
+            "model_name": "llama-3.1-8b-instant",
+            "temperature": 0.2,
+            "updated_at": datetime.utcnow()
+        }
+
+    monkeypatch.setattr(TenantService, "get_tenant_ai_settings", mock_get_tenant_ai_settings)
+
+    response = client.get("/api/v1/tenants/current/ai-settings")
+
+    assert response.status_code == 200
+    assert response.json()["api_key"] == "gsk_te••••"
+
+
+def test_update_tenant_ai_settings_requires_owner(override_current_user):
+    override_current_user("member")
+
+    response = client.patch(
+        "/api/v1/tenants/current/ai-settings",
+        json={"api_key": "new-key"},
+    )
+
+    assert response.status_code == 403
+
+
+def test_test_tenant_ai_settings_success(monkeypatch: pytest.MonkeyPatch, override_current_user):
+    override_current_user("owner")
+
+    async def mock_test_tenant_ai_settings(self, payload, current_user):
+        return {"success": True, "message": "Connection to Groq API successful."}
+
+    monkeypatch.setattr(TenantService, "test_tenant_ai_settings", mock_test_tenant_ai_settings)
+
+    response = client.post(
+        "/api/v1/tenants/current/ai-settings/test",
+        json={"api_key": "gsk_test_key_here"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+
 

@@ -424,3 +424,49 @@ class TenantService:
             data["api_key"] = raw_key[:6] + "••••" if len(raw_key) > 6 else "••••"
 
         return TenantAISettingsResponse(**data)
+
+    async def test_tenant_ai_settings(
+        self,
+        payload: TenantAISettingsUpdate,
+        current_user: CurrentUser,
+    ) -> dict:
+        """Test AI settings (ping test) with the provided or currently saved Groq key."""
+        api_key = payload.api_key
+        base_url = payload.base_url
+        model_name = payload.model_name or "llama-3.1-8b-instant"
+
+        # Resolve masked key or None to currently stored key
+        if not api_key or "••••" in api_key:
+            response = self.db.table("tenant_ai_settings").select("api_key", "base_url").eq("tenant_id", current_user.tenant_id).execute()
+            if response.data:
+                db_row = response.data[0]
+                if not api_key:
+                    api_key = db_row.get("api_key")
+                elif "••••" in api_key:
+                    api_key = db_row.get("api_key")
+                
+                if not base_url:
+                    base_url = db_row.get("base_url")
+
+        if not api_key:
+            return {"success": False, "message": "API Key is required to test connection."}
+
+        # Initialize Groq client and ping
+        from app.ai.groq_client import GroqLLMClient
+        try:
+            client = GroqLLMClient(
+                api_key=api_key,
+                base_url=base_url,
+                model=model_name
+            )
+            # Perform a minimal chat completion as a ping test
+            # Short timeout is already set (15.0s in Groq client)
+            client.chat_completion(
+                messages=[{"role": "user", "content": "ping"}],
+                max_tokens=2,
+                temperature=0.0
+            )
+            return {"success": True, "message": "Connection to Groq API successful."}
+        except Exception as exc:
+            logger.error(f"Ping test to Groq API failed: {str(exc)}")
+            return {"success": False, "message": f"Connection test failed: {str(exc)}"}
