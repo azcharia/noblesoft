@@ -5,7 +5,8 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { FileText, Filter, RefreshCw, Search } from 'lucide-react'
+import { FileText, Filter, RefreshCw, Search, Plus } from 'lucide-react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -109,38 +110,57 @@ export default function InvoicesPage() {
     }
   }
 
+  const getFilterLabel = (filter: InvoiceStatusFilter) => {
+    switch (filter) {
+      case 'all': return 'Semua'
+      case 'unpaid': return 'Belum Lunas'
+      case 'partial': return 'Sebagian'
+      case 'paid': return 'Lunas'
+      case 'overdue': return 'Jatuh Tempo'
+      default: return filter
+    }
+  }
+
   const getStatusBadge = (status: Invoice['payment_status']) => {
     if (status === 'paid') {
-      return <Badge variant="default">Paid</Badge>
+      return <Badge variant="default">Lunas</Badge>
     }
 
     if (status === 'partial') {
-      return <Badge variant="outline">Partial</Badge>
+      return <Badge variant="outline">Sebagian</Badge>
     }
 
     if (status === 'overdue') {
-      return <Badge variant="destructive">Overdue</Badge>
+      return <Badge variant="destructive">Jatuh Tempo</Badge>
     }
 
-    return <Badge variant="secondary">Unpaid</Badge>
+    return <Badge variant="secondary">Belum Lunas</Badge>
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        label="Billing"
-        title="Invoices"
-        description="Monitor invoice status dan pembayaran customer."
+        label="Penjualan & Kasir"
+        title="Nota Penjualan"
+        description="Pantau status tagihan dan pembayaran pelanggan Anda."
         actions={
-          <Button
-            variant="outline"
-            className="w-full gap-2 sm:w-auto"
-            onClick={loadInvoices}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          <div className="flex w-full sm:w-auto gap-2">
+            <Button
+              variant="outline"
+              className="gap-2 flex-1 sm:flex-none"
+              onClick={loadInvoices}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Muat Ulang
+            </Button>
+            <Link href="/invoices/new" className="flex-1 sm:flex-none">
+              <Button className="w-full gap-2 bg-brand-orange hover:bg-brand-orange/90 text-white border-none shadow-sm">
+                <Plus className="h-4 w-4" />
+                Buat Tagihan Baru
+              </Button>
+            </Link>
+          </div>
         }
       />
 
@@ -148,20 +168,20 @@ export default function InvoicesPage() {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <StatCard
-          title="Total Invoice"
-          subtitle="halaman aktif"
+          title="Jumlah Nota"
+          subtitle="di halaman ini"
           value={invoices.length}
           tone="default"
         />
         <StatCard
-          title="Belum Lunas"
-          subtitle="halaman aktif"
+          title="Nota Belum Lunas"
+          subtitle="di halaman ini"
           value={summary.unpaidCount}
           tone="danger"
         />
         <StatCard
-          title="Revenue Lunas"
-          subtitle="halaman aktif"
+          title="Uang Masuk (Lunas)"
+          subtitle="di halaman ini"
           value={formatCurrency(summary.paid)}
           tone="success"
         />
@@ -171,7 +191,7 @@ export default function InvoicesPage() {
         <div className="min-w-[260px] flex-1 max-w-lg relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Cari customer name..."
+            placeholder="Cari nama pelanggan..."
             value={search}
             onChange={(event) => handleSearch(event.target.value)}
             className="pl-10"
@@ -188,7 +208,7 @@ export default function InvoicesPage() {
               onClick={() => handleFilterChange(filter)}
               className="capitalize"
             >
-              {filter}
+              {getFilterLabel(filter)}
             </Button>
           ))}
         </div>
@@ -198,12 +218,12 @@ export default function InvoicesPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Invoice</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Issue / Due</TableHead>
-              <TableHead className="text-right">Total</TableHead>
+              <TableHead>Nomor Nota</TableHead>
+              <TableHead>Pelanggan</TableHead>
+              <TableHead>Tanggal Buat / Jatuh Tempo</TableHead>
+              <TableHead className="text-right">Total Bayar</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Aksi Cepat</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -211,7 +231,7 @@ export default function InvoicesPage() {
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                  Loading invoices...
+                  Memuat data nota...
                 </TableCell>
               </TableRow>
             ) : invoices.length === 0 ? (
@@ -219,7 +239,7 @@ export default function InvoicesPage() {
                 <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
                   <div className="mx-auto flex max-w-sm flex-col items-center gap-2">
                     <FileText className="h-6 w-6 text-muted-foreground" />
-                    <p>Tidak ada invoice ditemukan untuk filter saat ini.</p>
+                    <p>Tidak ada nota penjualan ditemukan.</p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -232,16 +252,16 @@ export default function InvoicesPage() {
                   <TableRow key={invoice.id}>
                     <TableCell>
                       <p className="font-medium text-foreground">{invoice.invoice_number}</p>
-                      <p className="text-xs text-muted-foreground">{invoice.items.length} item</p>
+                      <p className="text-xs text-muted-foreground">{invoice.items.length} barang</p>
                     </TableCell>
                     <TableCell>
                       <p className="font-medium text-foreground">{invoice.customer_name}</p>
                       <p className="text-xs text-muted-foreground">{invoice.customer_email || '-'}</p>
                     </TableCell>
                     <TableCell>
-                      <p className="text-sm text-foreground">Issue: {formatDate(invoice.issue_date)}</p>
+                      <p className="text-sm text-foreground">Dibuat: {formatDate(invoice.issue_date)}</p>
                       <p className="text-xs text-muted-foreground">
-                        Due: {invoice.due_date ? formatDate(invoice.due_date) : '-'}
+                        Jatuh Tempo: {invoice.due_date ? formatDate(invoice.due_date) : '-'}
                       </p>
                     </TableCell>
                     <TableCell className="text-right font-semibold">
@@ -255,16 +275,18 @@ export default function InvoicesPage() {
                           variant={canMarkPaid ? 'default' : 'outline'}
                           disabled={isUpdating || !canMarkPaid}
                           onClick={() => updateStatus(invoice, 'paid')}
+                          className={canMarkPaid ? "bg-brand-teal text-white hover:bg-brand-teal/90 border-none shadow-sm" : ""}
                         >
-                          Mark Paid
+                          Set Lunas
                         </Button>
                         <Button
                           size="sm"
                           variant={!canMarkPaid ? 'default' : 'outline'}
                           disabled={isUpdating || canMarkPaid}
                           onClick={() => updateStatus(invoice, 'unpaid')}
+                          className={!canMarkPaid ? "bg-brand-orange text-white hover:bg-brand-orange/90 border-none shadow-sm" : ""}
                         >
-                          Reopen
+                          Buka Kembali
                         </Button>
                       </div>
                     </TableCell>
@@ -278,7 +300,7 @@ export default function InvoicesPage() {
         {!isLoading && invoices.length > 0 && (
           <div className="flex items-center justify-between border-t border-border px-6 py-4">
             <p className="text-sm text-muted-foreground">
-              Showing {(page - 1) * 20 + 1} to {Math.min(page * 20, total)} of {total} invoices
+              Menampilkan {(page - 1) * 20 + 1} sampai {Math.min(page * 20, total)} dari {total} nota
             </p>
             <div className="flex gap-2">
               <Button
@@ -287,7 +309,7 @@ export default function InvoicesPage() {
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
                 disabled={page === 1}
               >
-                Previous
+                Sebelumnya
               </Button>
               <Button
                 variant="outline"
@@ -295,7 +317,7 @@ export default function InvoicesPage() {
                 onClick={() => setPage((current) => current + 1)}
                 disabled={!hasMore}
               >
-                Next
+                Berikutnya
               </Button>
             </div>
           </div>

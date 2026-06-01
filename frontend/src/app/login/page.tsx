@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { createClient, getSessionToken, primeSessionToken } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,6 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
   const supabase = createClient();
-  const showTestCredentials = process.env.NODE_ENV !== 'production';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,11 +35,15 @@ export default function LoginPage() {
         primeSessionToken(data.session?.access_token ?? null);
         await getSessionToken({ retries: 3, ensureHydrated: true });
         await new Promise((resolve) => setTimeout(resolve, 800));
-        router.push('/chat');
+        router.push('/dashboard');
         router.refresh();
       }
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      let errorMessage = err.message || 'Gagal masuk. Silakan coba lagi.';
+      if (err.message?.toLowerCase().includes('invalid')) {
+        errorMessage = 'Email atau password salah. Yuk, coba periksa kembali!';
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -66,47 +70,47 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-accent to-accent-secondary rounded-2xl shadow-accent mb-4">
             <Sparkles className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl font-display mb-2">
-            Noble<span className="gradient-text">Soft</span>
+          <h1 className="text-4xl font-display mb-2 text-brand-teal">
+            Noble<span className="text-brand-orange">Soft</span>
           </h1>
           <p className="text-muted-foreground">
-            AI-Powered Business Management
+            Aplikasi Kasir Digital & Manajemen Stok Berbasis AI
           </p>
         </div>
 
         {/* Login card */}
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden glass-card border-none shadow-lg">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-2xl font-display text-center">
-              Welcome Back
+            <CardTitle className="text-2xl font-display text-center text-brand-teal">
+              Selamat Datang
             </CardTitle>
             <p className="text-center text-sm text-muted-foreground">
-              Sign in to access your dashboard
+              Masuk untuk mengakses kasir digital Anda
             </p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               {/* Email input */}
               <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
+                <label htmlFor="email" className="text-sm font-medium flex items-center gap-2 text-brand-teal">
                   <Mail className="w-4 h-4 text-accent" />
-                  Email
+                  Email Toko
                 </label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@company.com"
+                  placeholder="anda@toko.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={loading}
-                  className="h-12"
+                  className="h-12 glass-input"
                 />
               </div>
 
               {/* Password input */}
               <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
+                <label htmlFor="password" className="text-sm font-medium flex items-center gap-2 text-brand-teal">
                   <Lock className="w-4 h-4 text-accent" />
                   Password
                 </label>
@@ -118,7 +122,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={loading}
-                  className="h-12"
+                  className="h-12 glass-input"
                 />
               </div>
 
@@ -135,39 +139,30 @@ export default function LoginPage() {
                 disabled={loading}
               >
                 {loading ? (
-                  'Signing in...'
+                  'Masuk...'
                 ) : (
                   <>
-                    Sign In
+                    Masuk ke Kasir
                     <ArrowRight className="w-4 h-4 ml-2 transition-transform group-hover:translate-x-1" />
                   </>
                 )}
               </Button>
 
-              {/* Test credentials info */}
-              {showTestCredentials && (
-                <div className="mt-6 p-4 bg-accent/5 border border-accent/20 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 rounded-full bg-accent mt-1.5 animate-pulse-slow" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground mb-1">
-                        Test Credentials
-                      </p>
-                      <p className="text-xs text-muted-foreground font-mono">
-                        admin@noblesoft.com<br />
-                        admin123
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div className="mt-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Belum punya akun toko?{' '}
+                  <Link href="/register" className="text-brand-blue font-medium hover:underline">
+                    Daftar Toko Baru
+                  </Link>
+                </p>
+              </div>
             </form>
           </CardContent>
         </Card>
 
         {/* Footer text */}
         <p className="text-center text-xs text-muted-foreground mt-6">
-          100% FREE • Powered by Groq AI • Local Embeddings
+          100% GRATIS • Didukung Groq AI & Supabase
         </p>
       </div>
     </div>

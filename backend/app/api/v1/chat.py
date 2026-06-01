@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 
-from app.core.dependencies import require_add_on, require_tier, CurrentUser
+from app.core.dependencies import require_add_on, require_tier, CurrentUser, get_current_user
 from app.core.database import get_supabase_admin_client
 from app.ai.embeddings import EmbeddingService
 from app.services.ai_agent_service import AIAgentService
@@ -61,6 +61,8 @@ class ChatResponse(BaseModel):
         description="Optional notes about hybrid reconciliation or fallback",
     )
     error: Optional[str] = Field(None, description="Error message if any")
+    function_executed: Optional[str] = Field(None, description="Function name executed")
+    execution_result: Optional[Dict[str, Any]] = Field(None, description="Execution result")
 
 
 class SuggestedQuestionsResponse(BaseModel):
@@ -122,7 +124,7 @@ def _build_coverage_response(tenant_id: str) -> Dict[str, Any]:
 )
 async def chat(
     chat_message: ChatMessage,
-    current_user: CurrentUser = Depends(require_tier(["pro", "enterprise"]))
+    current_user: CurrentUser = Depends(get_current_user)
 ):
     """
     Send a message to the AI assistant and get a response.
@@ -165,7 +167,7 @@ async def chat(
     description="Get AI-generated suggested questions based on your data"
 )
 async def get_suggestions(
-    current_user: CurrentUser = Depends(require_tier(["pro", "enterprise"]))
+    current_user: CurrentUser = Depends(get_current_user)
 ):
     """
     Get suggested questions you can ask the AI assistant.
@@ -193,7 +195,7 @@ async def get_suggestions(
     description="Check product/invoice embedding coverage used by chat retrieval"
 )
 async def get_index_coverage(
-    current_user: CurrentUser = Depends(require_tier(["pro", "enterprise"]))
+    current_user: CurrentUser = Depends(get_current_user)
 ):
     """Get embedding coverage diagnostics for current tenant."""
     try:
@@ -211,7 +213,7 @@ async def get_index_coverage(
     description="Rebuild all product/invoice embeddings for current tenant"
 )
 async def reindex_chat_documents(
-    current_user: CurrentUser = Depends(require_tier(["pro", "enterprise"]))
+    current_user: CurrentUser = Depends(get_current_user)
 ):
     """Rebuild tenant embeddings to recover from stale or partial index state."""
     try:
@@ -237,11 +239,10 @@ async def reindex_chat_documents(
     response_model=ChatResponse,
     summary="Chat with function calling (EXPERIMENTAL)",
     description="Advanced chat that can execute actions",
-    dependencies=[Depends(require_add_on("ai_agent_pack"))],
 )
 async def chat_with_function_calling(
     chat_message: ChatMessage,
-    current_user: CurrentUser = Depends(require_tier(["enterprise"]))
+    current_user: CurrentUser = Depends(get_current_user)
 ):
     """
     **EXPERIMENTAL FEATURE - Enterprise Only**

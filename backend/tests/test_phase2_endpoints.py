@@ -3,7 +3,6 @@ import pytest
 
 from app.core.dependencies import CurrentUser, get_current_user
 from app.main import app
-from app.services.billing_service import BillingService
 from app.services.tenant_service import TenantService
 
 
@@ -367,109 +366,4 @@ def test_reactivate_user_forbidden_for_member(override_current_user):
 
     assert response.status_code == 403
 
-
-def test_billing_status_success(monkeypatch: pytest.MonkeyPatch, override_current_user):
-    override_current_user("owner")
-
-    async def mock_get_billing_status(self, current_user):
-        return {
-            "tenant_id": "tenant-1",
-            "company_name": "NobleSoft Test",
-            "subscription_tier": "pro",
-            "is_active": True,
-            "max_users": 20,
-            "payment_gateway_customer_id": None,
-        }
-
-    monkeypatch.setattr(BillingService, "get_billing_status", mock_get_billing_status)
-
-    response = client.get("/api/v1/billing/status")
-
-    assert response.status_code == 200
-    assert response.json()["subscription_tier"] == "pro"
-
-
-def test_billing_catalog_success(monkeypatch: pytest.MonkeyPatch, override_current_user):
-    override_current_user("owner")
-
-    def mock_get_billing_catalog(self):
-        return {
-            "currency": "IDR",
-            "annual_discount_percent": 15,
-            "plans": [
-                {
-                    "tier": "basic",
-                    "monthly_price": "499000.00",
-                    "annual_price": "5089800.00",
-                    "annual_discount_percent": 15,
-                    "max_users": 5,
-                }
-            ],
-            "add_ons": [
-                {
-                    "code": "ai_agent_pack",
-                    "name": "AI Agent Pack",
-                    "description": "Additional specialist AI agents for advanced workflows.",
-                    "monthly_price": "299000.00",
-                    "annual_price": "3049800.00",
-                }
-            ],
-        }
-
-    monkeypatch.setattr(BillingService, "get_billing_catalog", mock_get_billing_catalog)
-
-    response = client.get("/api/v1/billing/catalog")
-
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["currency"] == "IDR"
-    assert payload["plans"][0]["tier"] == "basic"
-
-
-def test_create_midtrans_transaction_success(monkeypatch: pytest.MonkeyPatch, override_current_user):
-    override_current_user("owner")
-
-    async def mock_create_midtrans_transaction(self, payload, current_user):
-        return {
-            "order_id": "NSFT_tenant-1_pro_12345",
-            "token": "snap-token",
-            "redirect_url": "https://midtrans.example/redirect",
-            "target_tier": "pro",
-            "amount": "100000.00",
-        }
-
-    monkeypatch.setattr(BillingService, "create_midtrans_transaction", mock_create_midtrans_transaction)
-
-    response = client.post(
-        "/api/v1/billing/midtrans/transaction",
-        json={
-            "target_tier": "pro",
-            "amount": 100000,
-            "customer_email": "owner@noblesoft.test",
-        },
-    )
-
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["token"] == "snap-token"
-
-
-def test_midtrans_webhook_invalid_signature(monkeypatch: pytest.MonkeyPatch):
-    async def mock_process_midtrans_webhook(self, payload):
-        raise ValueError("Invalid Midtrans webhook signature")
-
-    monkeypatch.setattr(BillingService, "process_midtrans_webhook", mock_process_midtrans_webhook)
-
-    response = client.post(
-        "/api/v1/billing/midtrans/webhook",
-        json={
-            "order_id": "NSFT_tenant-1_pro_12345",
-            "status_code": "200",
-            "gross_amount": "100000.00",
-            "signature_key": "invalid-signature",
-            "transaction_status": "settlement",
-        },
-    )
-
-    assert response.status_code == 400
-    assert "Invalid Midtrans webhook signature" in response.json()["detail"]
+

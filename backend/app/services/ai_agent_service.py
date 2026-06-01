@@ -57,22 +57,13 @@ class AIAgentService:
             Dictionary with response and metadata
         """
         try:
-            # Validate subscription tier (should be checked at endpoint level too)
-            if current_user.subscription_tier not in ["pro", "enterprise"]:
-                return {
-                    "response": (
-                        "Maaf, fitur AI Chat hanya tersedia untuk paket Pro dan Enterprise. "
-                        "Silakan upgrade paket Anda untuk mengakses fitur ini."
-                    ),
-                    "error": "insufficient_tier",
-                    "sources": [],
-                    "assistant_mode": "rag",
-                    "orchestration_mode": "single",
-                    "tool_calls": [],
-                    "manager_result_summary": None,
-                    "auditor_result_summary": None,
-                    "reconciliation_notes": None,
-                }
+            # Override Groq client with tenant specific AI Settings (BYOK)
+            tenant_groq = await self._resolve_tenant_groq_client(current_user.tenant_id)
+            if tenant_groq:
+                self.groq_client = tenant_groq
+
+            # Validate subscription tier (bypassed for open source)
+            pass
             
             # Log query for analytics
             logger.info(
@@ -152,6 +143,10 @@ class AIAgentService:
                     "auditor_result_summary": None,
                     "reconciliation_notes": None,
                 }
+                if "function_executed" in manager_result:
+                    result["function_executed"] = manager_result["function_executed"]
+                if "execution_result" in manager_result:
+                    result["execution_result"] = manager_result["execution_result"]
             
             # Add user context to response
             result["user_context"] = {
@@ -168,7 +163,6 @@ class AIAgentService:
             )
             
             return result
-        
         except Exception as e:
             logger.error(f"Error processing chat message: {str(e)}")
             return {
@@ -326,7 +320,7 @@ class AIAgentService:
         current_user: CurrentUser,
         conversation_history: Optional[List[Dict[str, str]]] = None,
     ) -> Dict[str, Any]:
-        """Manager worker: use internal tenant-scoped RAG as the main brain path."""
+        """Manager worker: use internal tenant-scoped RAG + function calling as the main brain path."""
         top_k = self._resolve_rag_top_k(query=query, assistant_mode="rag")
         manager_result = await self._query_rag(
             query=query,
@@ -335,11 +329,55 @@ class AIAgentService:
             conversation_history=conversation_history,
         )
 
-        response_text = str(manager_result.get("response") or "").strip()
         sources = self._normalize_sources(manager_result.get("sources"))
         retrieved_count = int(manager_result.get("retrieved_count") or len(sources))
+        context = "\n".join([str(source.get("content", "")) for source in sources])
 
-        return {
+        # Step 2: Define available functions
+        available_functions = [
+            "create_product",
+            "create_invoice",
+            "update_stock",
+            "check_stock",
+            "get_invoice_status"
+        ]
+
+        if not hasattr(self, "groq_client"):
+            # Bypassed or mock test environment where LLM client is not initialized
+            response_text = str(manager_result.get("response") or "").strip()
+            function_executed = None
+            exec_res = None
+        else:
+            # Step 3: Ask AI to determine if function call is needed
+            function_prompt = get_function_calling_prompt(
+                query, context, available_functions
+            )
+
+            messages = [
+                {"role": "system", "content": "You are a function-calling AI assistant."},
+                {"role": "user", "content": function_prompt}
+            ]
+
+            ai_response = await self.groq_client.chat_completion_async(messages)
+
+            # Step 4: Parse AI response for function calls
+            function_call = self._parse_function_call(ai_response)
+
+            if function_call:
+                # Step 5: Execute function
+                execution_result = await self._execute_function(
+                    function_call,
+                    current_user
+                )
+                response_text = execution_result["message"]
+                function_executed = function_call["function"]
+                exec_res = execution_result
+            else:
+                response_text = ai_response.strip()
+                function_executed = None
+                exec_res = None
+
+        result = {
             "response": response_text,
             "sources": sources,
             "retrieved_count": retrieved_count,
@@ -351,6 +389,11 @@ class AIAgentService:
                 "response_preview": self._to_preview(response_text),
             },
         }
+        if function_executed:
+            result["function_executed"] = function_executed
+            result["execution_result"] = exec_res
+
+        return result
 
     async def _execute_auditor_worker(
         self,
@@ -545,6 +588,10 @@ class AIAgentService:
             Dictionary with response and executed actions
         """
         try:
+            # Override Groq client with tenant specific AI Settings (BYOK)
+            tenant_groq = await self._resolve_tenant_groq_client(current_user.tenant_id)
+            if tenant_groq:
+                self.groq_client = tenant_groq
             # Step 1: Retrieve relevant context
             top_k = self._resolve_rag_top_k(query=query, assistant_mode="function_calling")
             rag_result = await self._query_rag(
@@ -582,6 +629,12 @@ class AIAgentService:
             # Step 4: Parse AI response for function calls
             function_call = self._parse_function_call(ai_response)
             
+            user_context = {
+                "tenant_id": current_user.tenant_id,
+                "company_name": current_user.company_name,
+                "subscription_tier": current_user.subscription_tier
+            }
+
             if function_call:
                 # Step 5: Execute function
                 execution_result = await self._execute_function(
@@ -595,6 +648,9 @@ class AIAgentService:
                     "execution_result": execution_result,
                     "sources": rag_result.get("sources", []),
                     "retrieved_count": rag_result.get("retrieved_count", 0),
+                    "user_context": user_context,
+                    "assistant_mode": "function_calling",
+                    "orchestration_mode": "single",
                 }
             else:
                 # No function call detected: return direct analysis text from model.
@@ -602,6 +658,9 @@ class AIAgentService:
                     "response": ai_response,
                     "sources": rag_result.get("sources", []),
                     "retrieved_count": rag_result.get("retrieved_count", 0),
+                    "user_context": user_context,
+                    "assistant_mode": "function_calling",
+                    "orchestration_mode": "single",
                 }
         
         except Exception as e:
@@ -1244,36 +1303,36 @@ class AIAgentService:
 
             suggestions: List[str] = []
             suggestions.append(
-                f"Berapa total {len(products)} produk aktif yang tersedia saat ini?"
+                f"Berapa total jenis barang dagangan yang kita miliki saat ini? (Tercatat {len(products)} barang)"
             )
 
             if low_stock_products:
                 suggestions.append(
-                    f"Produk apa saja yang stoknya menipis? (saat ini {len(low_stock_products)} produk)"
+                    f"Barang apa saja yang stoknya hampir habis dan perlu dibeli lagi? (Ada {len(low_stock_products)} barang)"
                 )
             else:
-                suggestions.append("Produk mana yang stoknya paling tinggi saat ini?")
+                suggestions.append("Barang apa yang stoknya paling banyak di toko saat ini?")
 
             suggestions.append(
-                f"Berapa jumlah invoice yang masih belum lunas? (tercatat {len(unpaid_invoices)} invoice)"
+                f"Ada berapa nota penjualan yang pembayarannya belum lunas? (Ada {len(unpaid_invoices)} nota)"
             )
 
             if invoices:
                 largest_invoice = max(invoices, key=lambda inv: float(inv.get("total_amount") or 0))
-                largest_customer = largest_invoice.get("customer_name", "customer")
+                largest_customer = largest_invoice.get("customer_name", "pelanggan")
                 suggestions.append(
-                    f"Tampilkan detail invoice terbesar dari {largest_customer}."
+                    f"Tunjukkan nota penjualan dengan nilai transaksi terbesar atas nama pelanggan {largest_customer}."
                 )
             else:
-                suggestions.append("Bagaimana ringkasan performa invoice minggu ini?")
+                suggestions.append("Bagaimana rangkuman penjualan toko kita untuk minggu ini?")
 
             if products:
-                first_product = products[0].get("name") or "produk utama"
+                first_product = products[0].get("name") or "barang utama"
                 suggestions.append(
-                    f"Bisa cek status stok dan rekomendasi restock untuk {first_product}?"
+                    f"Berapa sisa stok barang {first_product} dan kapan harus beli lagi?"
                 )
             else:
-                suggestions.append("Bagaimana cara menambahkan produk pertama di sistem?")
+                suggestions.append("Bagaimana cara mencatat barang dagangan baru ke dalam sistem?")
 
             # Keep UI compact and deterministic
             return suggestions[:6]
@@ -1281,9 +1340,35 @@ class AIAgentService:
         except Exception as e:
             logger.warning(f"Failed to generate dynamic suggestions: {str(e)}")
             return [
-                "Berapa total stok produk saat ini?",
-                "Produk apa saja yang stoknya rendah?",
-                "Berapa jumlah invoice yang belum dibayar?",
-                "Siapa customer dengan invoice terbesar?",
-                "Tampilkan ringkasan inventory",
+                "Berapa total sisa stok barang di toko saat ini?",
+                "Barang apa saja yang stoknya hampir habis?",
+                "Berapa banyak nota tagihan yang belum dibayar lunas?",
+                "Siapa pelanggan dengan nilai transaksi nota terbesar?",
+                "Tampilkan rangkuman stok barang dagangan",
             ]
+
+    async def _resolve_tenant_groq_client(self, tenant_id: str) -> Optional[GroqLLMClient]:
+        """Resolve a custom GroqLLMClient for the given tenant using tenant_ai_settings (BYOK)."""
+        try:
+            db = get_supabase_admin_client()
+            response = db.table("tenant_ai_settings").select("*").eq("tenant_id", tenant_id).execute()
+            if response.data:
+                settings_data = response.data[0]
+                api_key = settings_data.get("api_key")
+                base_url = settings_data.get("base_url")
+                model_name = settings_data.get("model_name")
+                temperature = settings_data.get("temperature")
+                
+                # Check if custom settings are provided
+                if api_key:
+                    temp_val = float(temperature) if temperature is not None else 0.2
+                    return GroqLLMClient(
+                        api_key=api_key,
+                        base_url=base_url,
+                        model=model_name,
+                        temperature=temp_val
+                    )
+            return None
+        except Exception as e:
+            logger.warning(f"Failed to resolve tenant specific Groq client for {tenant_id}: {str(e)}")
+            return None

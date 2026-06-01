@@ -7,6 +7,7 @@
 import { User, Bot } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { SourcesPanel } from './SourcesPanel'
+import ReactMarkdown from 'react-markdown'
 
 interface Message {
   id: string
@@ -44,9 +45,11 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               : 'border-border bg-surface'
           }`}
         >
-          <p className="text-sm whitespace-pre-wrap leading-relaxed">
-            {message.content}
-          </p>
+          <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none break-words">
+            <ReactMarkdown>
+              {message.content}
+            </ReactMarkdown>
+          </div>
         </Card>
         
         {/* Sources panel for assistant messages */}

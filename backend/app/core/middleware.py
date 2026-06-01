@@ -59,7 +59,7 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
         request.state.rate_limit = None
         
         # Skip auth for public endpoints
-        public_paths = ["/health", "/", "/api/docs", "/api/redoc", "/api/openapi.json"]
+        public_paths = ["/health", "/", "/api/docs", "/api/redoc", "/api/openapi.json", "/api/v1/tenants/register"]
         if request.url.path in public_paths:
             return await call_next(request)
         

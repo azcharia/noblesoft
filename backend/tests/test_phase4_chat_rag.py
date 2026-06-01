@@ -430,28 +430,6 @@ def test_chat_endpoint_forwards_history_to_service(monkeypatch: pytest.MonkeyPat
     assert captured["history"] == payload_history
 
 
-def test_chat_function_call_requires_enterprise(override_current_user):
-    override_current_user("pro")
-
-    response = client.post(
-        "/api/v1/chat/function-call",
-        json={"message": "Buatkan invoice baru"},
-    )
-
-    assert response.status_code == 403
-
-
-def test_chat_function_call_requires_ai_agent_add_on(override_current_user):
-    override_current_user("enterprise", add_ons=[])
-
-    response = client.post(
-        "/api/v1/chat/function-call",
-        json={"message": "Buatkan invoice baru"},
-    )
-
-    assert response.status_code == 403
-
-
 def test_chat_function_call_forwards_history(monkeypatch: pytest.MonkeyPatch, override_current_user):
     override_current_user("enterprise", add_ons=[{"code": "ai_agent_pack", "quantity": 1}])
     captured = {"history": None}

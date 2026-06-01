@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Plus, Search, Filter, AlertTriangle, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -159,9 +160,9 @@ export default function InventoryPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        label="Inventory"
-        title="Inventory"
-        description="Manage your products and stock levels."
+        label="Persediaan Stok"
+        title="Stok Barang"
+        description="Atur daftar barang dagangan Anda dan pantau jumlah persediaan stok agar tidak kehabisan."
         actions={
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             <Button
@@ -171,11 +172,11 @@ export default function InventoryPage() {
               disabled={isLoading}
             >
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
+              Muat Ulang
             </Button>
-            <Button className="w-full gap-2 sm:w-auto" onClick={openCreateForm}>
+            <Button className="w-full gap-2 sm:w-auto bg-brand-orange hover:bg-brand-orange/90 text-white border-none shadow-sm" onClick={openCreateForm}>
               <Plus className="w-4 h-4" />
-              {showCreateForm && !editingId ? 'Close Form' : 'Add Product'}
+              {showCreateForm && !editingId ? 'Tutup Formulir' : '+ Tambah Barang Baru'}
             </Button>
           </div>
         }
@@ -187,7 +188,7 @@ export default function InventoryPage() {
         <Card>
           <form onSubmit={handleSubmit}>
             <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
-              <CardTitle>{editingId ? 'Edit Product' : 'Create Product'}</CardTitle>
+              <CardTitle>{editingId ? 'Ubah Detail Barang' : 'Tambah Barang Baru'}</CardTitle>
               <Button
                 type="button"
                 variant="ghost"
@@ -197,69 +198,91 @@ export default function InventoryPage() {
                   resetForm()
                 }}
               >
-                Cancel
+                Batal
               </Button>
             </CardHeader>
 
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <Input
-                  placeholder="SKU"
-                  value={formState.sku}
-                  onChange={(e) => setFormState((prev) => ({ ...prev, sku: e.target.value }))}
-                  required
-                />
-                <Input
-                  placeholder="Product name"
-                  value={formState.name}
-                  onChange={(e) => setFormState((prev) => ({ ...prev, name: e.target.value }))}
-                  required
-                />
-                <Input
-                  placeholder="Category"
-                  value={formState.category}
-                  onChange={(e) => setFormState((prev) => ({ ...prev, category: e.target.value }))}
-                />
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="Unit price"
-                  value={formState.unit_price}
-                  onChange={(e) => setFormState((prev) => ({ ...prev, unit_price: e.target.value }))}
-                  required
-                />
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="Stock quantity"
-                  value={formState.stock_quantity}
-                  onChange={(e) => setFormState((prev) => ({ ...prev, stock_quantity: e.target.value }))}
-                  required
-                />
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="Low stock threshold"
-                  value={formState.low_stock_threshold}
-                  onChange={(e) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      low_stock_threshold: e.target.value,
-                    }))
-                  }
-                  required
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>SKU / Kode Barang <span className="text-destructive">*</span></Label>
+                  <Input
+                    placeholder="Contoh: KB-001"
+                    value={formState.sku}
+                    onChange={(e) => setFormState((prev) => ({ ...prev, sku: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nama Barang <span className="text-destructive">*</span></Label>
+                  <Input
+                    placeholder="Contoh: Kain Batik Solo"
+                    value={formState.name}
+                    onChange={(e) => setFormState((prev) => ({ ...prev, name: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Kategori Barang</Label>
+                  <Input
+                    placeholder="Contoh: Batik, Makanan, dll"
+                    value={formState.category}
+                    onChange={(e) => setFormState((prev) => ({ ...prev, category: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Harga Satuan <span className="text-destructive">*</span></Label>
+                  <Input
+                    type="text"
+                    placeholder="Rp 0"
+                    value={formState.unit_price !== '0' && formState.unit_price !== '' ? new Intl.NumberFormat('id-ID').format(Number(formState.unit_price)) : formState.unit_price === '0' ? '' : formState.unit_price}
+                    onChange={(e) => {
+                      const rawValue = e.target.value.replace(/\D/g, '')
+                      setFormState((prev) => ({ ...prev, unit_price: rawValue || '0' }))
+                    }}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sisa Stok <span className="text-destructive">*</span></Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="Jumlah Stok"
+                    value={formState.stock_quantity}
+                    onChange={(e) => setFormState((prev) => ({ ...prev, stock_quantity: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Batas Stok Minimum Peringatan</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="Batas Minimum"
+                    value={formState.low_stock_threshold}
+                    onChange={(e) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        low_stock_threshold: e.target.value,
+                      }))
+                    }
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Deskripsi Barang (Opsional)</Label>
+                <Textarea
+                  placeholder="Keterangan tambahan barang..."
+                  value={formState.description}
+                  onChange={(e) => setFormState((prev) => ({ ...prev, description: e.target.value }))}
                 />
               </div>
 
-              <Textarea
-                placeholder="Description"
-                value={formState.description}
-                onChange={(e) => setFormState((prev) => ({ ...prev, description: e.target.value }))}
-              />
-
-              <Button type="submit" disabled={isSubmitting} className="gap-2">
-                {isSubmitting ? 'Saving...' : editingId ? 'Save Changes' : 'Create Product'}
+              <Button type="submit" disabled={isSubmitting} className="gap-2 w-full md:w-auto mt-4 bg-brand-teal text-white hover:bg-brand-teal/90 border-none shadow-sm">
+                {isSubmitting ? 'Menyimpan...' : editingId ? 'Simpan Perubahan' : 'Tambah Barang Dagangan'}
               </Button>
             </CardContent>
           </form>
@@ -271,7 +294,7 @@ export default function InventoryPage() {
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search products by name, SKU, or description..."
+            placeholder="Cari barang berdasarkan nama, kode barang (SKU), atau keterangan..."
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             className="pl-10"
@@ -279,24 +302,24 @@ export default function InventoryPage() {
         </div>
         <Button variant="outline" className="gap-2">
           <Filter className="w-4 h-4" />
-          Filters
+          Penyaring
         </Button>
       </div>
       
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard title="Total Products" value={total} />
+        <StatCard title="Total Jenis Barang" value={total} />
         <StatCard
-          title="Low Stock Items"
+          title="Barang Hampir Habis"
           value={products.filter((p) => p.is_low_stock).length}
           tone="warning"
         />
         <StatCard
-          title="Total Stock Value"
+          title="Nilai Total Stok"
           value={formatCurrency(products.reduce((sum, p) => sum + p.unit_price * p.stock_quantity, 0))}
         />
         <StatCard
-          title="Categories"
+          title="Total Kategori"
           value={new Set(products.map((p) => p.category).filter(Boolean)).size}
         />
       </div>
@@ -306,26 +329,26 @@ export default function InventoryPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>SKU</TableHead>
-              <TableHead>Product Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Price</TableHead>
-              <TableHead className="text-right">Stock</TableHead>
+              <TableHead>Kode Barang (SKU)</TableHead>
+              <TableHead>Nama Barang</TableHead>
+              <TableHead>Kategori</TableHead>
+              <TableHead className="text-right">Harga Jual</TableHead>
+              <TableHead className="text-right">Sisa Stok</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  Loading products...
+                  Memuat data barang...
                 </TableCell>
               </TableRow>
             ) : products.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  No products found
+                  Barang tidak ditemukan
                 </TableCell>
               </TableRow>
             ) : (
@@ -364,9 +387,9 @@ export default function InventoryPage() {
                   </TableCell>
                   <TableCell>
                     {product.is_low_stock ? (
-                      <Badge variant="destructive">Low Stock</Badge>
+                      <Badge variant="destructive">Hampir Habis</Badge>
                     ) : (
-                      <Badge variant="default">In Stock</Badge>
+                      <Badge variant="default">Tersedia</Badge>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
@@ -374,8 +397,9 @@ export default function InventoryPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => openEditForm(product)}
+                      className="text-brand-teal hover:text-brand-blue"
                     >
-                      Edit
+                      Ubah Detail
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -388,7 +412,7 @@ export default function InventoryPage() {
         {!isLoading && products.length > 0 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-border">
             <p className="text-sm text-muted-foreground">
-              Showing {(page - 1) * 20 + 1} to {Math.min(page * 20, total)} of {total} products
+              Menampilkan {(page - 1) * 20 + 1} sampai {Math.min(page * 20, total)} dari {total} barang
             </p>
             <div className="flex gap-2">
               <Button
@@ -397,7 +421,7 @@ export default function InventoryPage() {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
               >
-                Previous
+                Sebelumnya
               </Button>
               <Button
                 variant="outline"
@@ -405,7 +429,7 @@ export default function InventoryPage() {
                 onClick={() => setPage((p) => p + 1)}
                 disabled={!hasMore}
               >
-                Next
+                Berikutnya
               </Button>
             </div>
           </div>

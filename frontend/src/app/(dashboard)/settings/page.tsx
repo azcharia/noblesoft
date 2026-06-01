@@ -97,14 +97,6 @@ export default async function SettingsPage() {
               <dd className="font-mono text-xs text-muted-foreground">{tenant?.id || '-'}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Subscription</dt>
-              <dd>
-                <Badge variant="accent" className="capitalize">
-                  {tenant?.subscription_tier || 'unknown'}
-                </Badge>
-              </dd>
-            </div>
-            <div className="flex justify-between gap-4">
               <dt className="text-muted-foreground">Max Users</dt>
               <dd className="font-medium text-foreground">{tenant?.max_users ?? '-'}</dd>
             </div>
@@ -122,11 +114,8 @@ export default async function SettingsPage() {
               <Link href="/settings/team">
                 <Button variant="outline">Manage Team</Button>
               </Link>
-              <Link href="/settings/governance">
-                <Button variant="outline">Open Governance</Button>
-              </Link>
-              <Link href="/settings/billing">
-                <Button variant="outline">Open Billing</Button>
+              <Link href="/settings/ai">
+                <Button className="bg-brand-teal text-white hover:bg-brand-teal/90">AI Settings</Button>
               </Link>
             </div>
           </CardContent>

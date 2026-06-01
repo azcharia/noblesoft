@@ -1061,6 +1061,8 @@ export interface ChatResponse {
   }
   reconciliation_notes?: string
   error?: string
+  function_executed?: string
+  execution_result?: Record<string, any>
 }
 
 export type BillingTier = 'basic' | 'pro' | 'enterprise'

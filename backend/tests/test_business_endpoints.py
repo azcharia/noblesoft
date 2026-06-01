@@ -193,15 +193,6 @@ def test_chat_send_success(monkeypatch: pytest.MonkeyPatch, override_current_use
     assert payload["retrieved_count"] == 1
 
 
-def test_chat_suggestions_forbidden_for_basic_tier(override_current_user):
-    override_current_user("basic")
-
-    response = client.get("/api/v1/chat/suggestions")
-
-    assert response.status_code == 403
-    assert "requires" in response.json()["detail"].lower()
-
-
 def test_invoices_get_success(monkeypatch: pytest.MonkeyPatch, override_current_user):
     override_current_user("pro")
 

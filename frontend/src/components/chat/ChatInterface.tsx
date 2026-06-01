@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { apiClient, APIError, type ChatResponse } from '@/lib/api/client'
 import { getSessionToken } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
 import { MessageBubble } from './MessageBubble'
 import { SuggestedQuestions } from './SuggestedQuestions'
 
@@ -22,7 +23,11 @@ interface Message {
   retrievedCount?: number
 }
 
-export function ChatInterface() {
+interface ChatInterfaceProps {
+  noBorder?: boolean
+}
+
+export function ChatInterface({ noBorder = false }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -135,7 +140,10 @@ export function ChatInterface() {
   }
   
   return (
-    <div className="flex-1 flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+    <div className={cn(
+      "flex-1 flex flex-col overflow-hidden",
+      !noBorder && "rounded-2xl border border-border bg-card shadow-sm"
+    )}>
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {messages.length === 0 ? (
@@ -145,11 +153,11 @@ export function ChatInterface() {
               <Sparkles className="w-8 h-8 text-white" />
             </div>
             <h3 className="mb-2 text-xl font-semibold text-foreground">
-              NobleSoft AI Assistant
+              Asisten AI Toko
             </h3>
             <p className="mb-8 max-w-md text-muted-foreground">
-              Tanyakan apa saja tentang inventory, invoice, dan data bisnis Anda.
-              AI akan menjawab berdasarkan data aktual perusahaan Anda.
+              Tanyakan apa saja tentang stok barang, nota, dan data toko Anda.
+              AI akan menjawab berdasarkan data aktual toko Anda.
             </p>
 
             {suggestionsError && (
@@ -175,9 +183,9 @@ export function ChatInterface() {
             
             {/* Loading indicator */}
             {isLoading && (
-              <div className="flex items-center gap-3 text-muted-foreground">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span className="text-sm">AI sedang berpikir...</span>
+              <div className="flex items-center gap-3 text-muted-foreground p-4 bg-muted/30 rounded-2xl w-fit">
+                <Loader2 className="w-5 h-5 animate-spin text-brand-blue" />
+                <span className="text-sm font-medium animate-pulse">Sebentar ya, Asisten sedang mengecek catatan toko...</span>
               </div>
             )}
             

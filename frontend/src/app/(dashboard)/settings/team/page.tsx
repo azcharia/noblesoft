@@ -43,9 +43,9 @@ export default async function TeamManagementPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        label="Workspace"
-        title="Team Management"
-        description="Kelola status anggota tim dan kapasitas seat workspace."
+        label="Pengaturan Toko"
+        title="Anggota Tim & Karyawan"
+        description="Atur hak akses staf dan karyawan toko Anda secara mandiri."
       />
 
       <TeamManagementPanel currentUserId={currentUserId} currentUserRole={currentUserRole} />

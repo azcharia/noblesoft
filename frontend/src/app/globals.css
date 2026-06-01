@@ -4,10 +4,13 @@
 
 @layer base {
   :root {
-    --accent: #0052FF;
-    --accent-secondary: #4D7CFF;
-    --foreground: #0F172A;
-    --background: #FAFAFA;
+    --accent: #002da9;
+    --accent-secondary: #045656;
+    --foreground: #045656;
+    --background: #fffefc;
+    --brand-orange: #f93d1b;
+    --brand-yellow: #f2d561;
+    --brand-mint: #cbe5e5;
   }
 
   * {
@@ -25,6 +28,44 @@
 }
 
 @layer utilities {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(203, 229, 229, 0.8);
+    box-shadow: 0 8px 32px 0 rgba(4, 86, 86, 0.04);
+  }
+
+  .glass-card-accent {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 45, 169, 0.15);
+    box-shadow: 0 8px 32px 0 rgba(0, 45, 169, 0.05);
+  }
+
+  .glass-input {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(203, 229, 229, 0.7);
+    transition: all 0.2s ease-in-out;
+  }
+
+  .glass-input:focus {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: #002da9;
+    box-shadow: 0 0 0 1px rgba(0, 45, 169, 0.15);
+    outline: none;
+  }
+
+  .glass-nav {
+    background: rgba(255, 254, 252, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-color: rgba(203, 229, 229, 0.5);
+  }
+
   .gradient-text {
     @apply bg-gradient-to-r from-accent to-accent-secondary bg-clip-text text-transparent;
   }
@@ -48,7 +89,7 @@
 
   .gradient-underline {
     @apply pointer-events-none absolute -bottom-1 left-0 h-3 w-full rounded-sm;
-    background: linear-gradient(to right, rgba(0, 82, 255, 0.15), rgba(77, 124, 255, 0.1));
+    background: linear-gradient(to right, rgba(0, 45, 169, 0.15), rgba(4, 86, 86, 0.1));
   }
 
   .section-label {
@@ -68,11 +109,11 @@
   }
 
   .radial-accent-glow {
-    background: radial-gradient(circle at center, rgba(0, 82, 255, 0.12) 0%, rgba(0, 82, 255, 0) 70%);
+    background: radial-gradient(circle at center, rgba(0, 45, 169, 0.12) 0%, rgba(0, 45, 169, 0) 70%);
   }
 
   .radial-accent-glow-subtle {
-    background: radial-gradient(circle at center, rgba(77, 124, 255, 0.08) 0%, rgba(77, 124, 255, 0) 70%);
+    background: radial-gradient(circle at center, rgba(4, 86, 86, 0.08) 0%, rgba(4, 86, 86, 0) 70%);
   }
   
   /* Dot pattern texture for dark sections */

@@ -300,7 +300,7 @@ async def get_user_from_database(user_id: str) -> Dict[str, Any]:
 
 def check_feature_access(subscription_tier: str, feature: str) -> bool:
     """
-    Check if a subscription tier has access to a specific feature
+    Check if a subscription tier has access to a specific feature - bypassed for open source
     
     Args:
         subscription_tier: Tier name (trial, basic, pro, enterprise)
@@ -309,15 +309,7 @@ def check_feature_access(subscription_tier: str, feature: str) -> bool:
     Returns:
         True if feature is accessible, False otherwise
     """
-    tier_features = {
-        "trial": settings.FEATURES_TRIAL,
-        "basic": settings.FEATURES_BASIC,
-        "pro": settings.FEATURES_PRO,
-        "enterprise": settings.FEATURES_ENTERPRISE
-    }
-    
-    features = tier_features.get(subscription_tier, [])
-    return feature in features
+    return True
 
 
 def require_feature(feature: str, user_tier: str):

@@ -111,13 +111,9 @@ export function TeamManagementPanel({ currentUserId, currentUserRole }: TeamMana
       setIsLoading(true)
       setError(null)
 
-      const [usersData, billingStatus] = await Promise.all([
-        apiClient.users.list(true),
-        apiClient.billing.getStatus(),
-      ])
-
+      const usersData = await apiClient.users.list(true)
       setUsers(usersData.users)
-      setMaxUsers(Math.max(1, Number(billingStatus.max_users || 1)))
+      setMaxUsers(1000)
     } catch (err) {
       setError(toFriendlyError(err))
     } finally {
@@ -354,11 +350,11 @@ export function TeamManagementPanel({ currentUserId, currentUserRole }: TeamMana
                   variant="outline"
                   onClick={() => handleInviteDialogChange(false)}
                 >
-                  Cancel
+                  Batal
                 </Button>
-                <Button type="submit" className="gap-2" disabled={isInviting}>
+                <Button type="submit" className="gap-2 bg-brand-orange hover:bg-brand-orange/90 text-white border-none shadow-sm" disabled={isInviting}>
                   <UserPlus className="h-4 w-4" />
-                  {isInviting ? 'Inviting...' : 'Invite Member'}
+                  {isInviting ? 'Mengundang...' : 'Undang Anggota'}
                 </Button>
               </DialogFooter>
             </form>
@@ -379,7 +375,7 @@ export function TeamManagementPanel({ currentUserId, currentUserRole }: TeamMana
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Cari nama, email, atau role"
+            placeholder="Cari nama, email, atau jabatan..."
             className="pl-10"
           />
         </div>
@@ -387,26 +383,26 @@ export function TeamManagementPanel({ currentUserId, currentUserRole }: TeamMana
         <div className="flex items-center gap-2">
           <Button variant="outline" className="gap-2" onClick={() => handleInviteDialogChange(true)}>
             <UserPlus className="h-4 w-4" />
-            Invite
+            Undang Member
           </Button>
 
           <Button variant="outline" className="gap-2" onClick={loadTeamData} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
+            Muat Ulang
           </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatCard title="Active Seats" value={activeSeats} subtitle={`of ${maxUsers} seats`} tone="accent" />
-        <StatCard title="Available Seats" value={availableSeats} subtitle="ready to use" tone={availableSeats > 0 ? 'success' : 'warning'} />
-        <StatCard title="Total Members" value={users.length} subtitle="active + inactive" />
+        <StatCard title="Seat Aktif" value={activeSeats} subtitle={`dari ${maxUsers} seat`} tone="accent" />
+        <StatCard title="Seat Tersedia" value={availableSeats} subtitle="siap digunakan" tone={availableSeats > 0 ? 'success' : 'warning'} />
+        <StatCard title="Total Anggota" value={users.length} subtitle="aktif + nonaktif" />
       </div>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
-          <CardTitle className="text-lg">Team Members</CardTitle>
-          <Badge variant="outline">{filteredUsers.length} shown</Badge>
+          <CardTitle className="text-lg text-brand-teal">Anggota Tim & Karyawan</CardTitle>
+          <Badge variant="outline">{filteredUsers.length} ditampilkan</Badge>
         </CardHeader>
 
         <CardContent className="px-0 pb-0">
@@ -414,19 +410,19 @@ export function TeamManagementPanel({ currentUserId, currentUserRole }: TeamMana
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-6">Name</TableHead>
+                  <TableHead className="pl-6">Nama</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
+                  <TableHead>Jabatan</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Updated</TableHead>
-                  <TableHead className="pr-6 text-right">Action</TableHead>
+                  <TableHead>Diperbarui</TableHead>
+                  <TableHead className="pr-6 text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                      Loading team members...
+                      Memuat data anggota tim...
                     </TableCell>
                   </TableRow>
                 ) : filteredUsers.length === 0 ? (

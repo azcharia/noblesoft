@@ -6,14 +6,9 @@ from fastapi import APIRouter
 
 # Import sub-routers
 from app.api.v1 import (
-    billing,
     chat,
-    governance,
     invoices,
-    onboarding,
     products,
-    qbr,
-    support,
     tenants,
     users,
 )
@@ -52,36 +47,6 @@ api_router.include_router(
     tags=["Users"]
 )
 
-api_router.include_router(
-    billing.router,
-    prefix="/billing",
-    tags=["Billing"]
-)
-
-api_router.include_router(
-    governance.router,
-    prefix="/governance",
-    tags=["Governance"]
-)
-
-api_router.include_router(
-    onboarding.router,
-    prefix="/operations/onboarding",
-    tags=["Operations Onboarding"]
-)
-
-api_router.include_router(
-    support.router,
-    prefix="/operations/support",
-    tags=["Operations Support"]
-)
-
-api_router.include_router(
-    qbr.router,
-    prefix="/operations/qbr",
-    tags=["Operations QBR"]
-)
-
 # Root endpoint
 @api_router.get("/")
 async def api_root():
@@ -93,14 +58,9 @@ async def api_root():
         "available_endpoints": {
             "products": "/api/v1/products",
             "invoices": "/api/v1/invoices",
-            "chat": "/api/v1/chat (Pro/Enterprise only)",
+            "chat": "/api/v1/chat",
             "tenants": "/api/v1/tenants",
             "users": "/api/v1/users",
-            "billing": "/api/v1/billing",
-            "governance": "/api/v1/governance",
-            "operations_onboarding": "/api/v1/operations/onboarding",
-            "operations_support": "/api/v1/operations/support",
-            "operations_qbr": "/api/v1/operations/qbr",
             "docs": "/api/docs"
         }
     }

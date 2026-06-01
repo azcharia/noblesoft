@@ -15,6 +15,10 @@ from app.models.tenant import (
     SubscriptionUpdateResponse,
     TenantResponse,
     TenantUpdate,
+    TenantRegisterRequest,
+    TenantRegisterResponse,
+    TenantAISettingsResponse,
+    TenantAISettingsUpdate,
 )
 from app.models.user import (
     TenantUserDeactivateResponse,
@@ -279,3 +283,139 @@ class TenantService:
                 return str(user_id) if user_id else None
 
         return None
+
+    async def register_new_tenant(
+        self,
+        payload: TenantRegisterRequest,
+    ) -> TenantRegisterResponse:
+        # Check if email already registered in public.users
+        existing = self.db.table("users").select("id").eq(
+            "email", payload.email.lower()
+        ).execute()
+        if existing.data:
+            raise ValueError(f"User dengan email '{payload.email}' sudah terdaftar.")
+
+        # 1. Insert new tenant
+        tenant_insert = self.db.table("tenants").insert({
+            "company_name": payload.company_name,
+            "subscription_tier": "enterprise", # Default standard tier bypass
+            "is_active": True,
+            "max_users": 1000
+        }).execute()
+
+        if not tenant_insert.data:
+            raise Exception("Gagal membuat profil toko baru di database.")
+
+        created_tenant = tenant_insert.data[0]
+        created_tenant_id = created_tenant["id"]
+
+        try:
+            # 2. Create user in Supabase Auth via Admin SDK
+            auth_result = self.db.auth.admin.create_user(
+                {
+                    "email": payload.email.lower(),
+                    "password": payload.password,
+                    "email_confirm": True,
+                    "user_metadata": {
+                        "full_name": payload.full_name,
+                        "tenant_id": created_tenant_id,
+                    },
+                }
+            )
+
+            created_user_id = self._extract_auth_user_id(auth_result)
+            if not created_user_id:
+                raise Exception("Failed to create auth user for registration")
+
+            # 3. Create user in public.users
+            insert_user = self.db.table("users").insert({
+                "id": created_user_id,
+                "tenant_id": created_tenant_id,
+                "email": payload.email.lower(),
+                "full_name": payload.full_name,
+                "role": "owner",
+                "is_active": True,
+            }).execute()
+
+            if not insert_user.data:
+                raise Exception("Failed to create user profile row")
+
+            return TenantRegisterResponse(
+                tenant_id=created_tenant_id,
+                company_name=payload.company_name,
+                user_id=created_user_id,
+                email=payload.email.lower(),
+                message="Registrasi Toko Baru berhasil."
+            )
+
+        except Exception as err:
+            # Cleanup created tenant on error
+            try:
+                self.db.table("tenants").delete().eq("id", created_tenant_id).execute()
+            except Exception as cleanup_err:
+                logger.warning("Cleanup failed for tenant %s: %s", created_tenant_id, cleanup_err)
+            raise err
+
+    async def get_tenant_ai_settings(self, current_user: CurrentUser) -> TenantAISettingsResponse:
+        # Fetch or insert if not exists
+        response = self.db.table("tenant_ai_settings").select("*").eq("tenant_id", current_user.tenant_id).execute()
+        
+        if not response.data:
+            # Insert default row
+            default_row = {
+                "tenant_id": current_user.tenant_id,
+                "api_key": None,
+                "base_url": None,
+                "model_name": "llama-3.1-8b-instant",
+                "temperature": 0.2
+            }
+            insert_resp = self.db.table("tenant_ai_settings").insert(default_row).execute()
+            if not insert_resp.data:
+                raise Exception("Failed to initialize AI settings for this tenant")
+            data = insert_resp.data[0]
+        else:
+            data = response.data[0]
+
+        # Secure key masking
+        raw_key = data.get("api_key")
+        if raw_key:
+            data["api_key"] = raw_key[:6] + "••••" if len(raw_key) > 6 else "••••"
+            
+        return TenantAISettingsResponse(**data)
+
+    async def update_tenant_ai_settings(
+        self,
+        payload: TenantAISettingsUpdate,
+        current_user: CurrentUser,
+    ) -> TenantAISettingsResponse:
+        update_dict = payload.model_dump(exclude_none=True)
+        
+        # Check if row exists, if not initialize it
+        check = self.db.table("tenant_ai_settings").select("tenant_id").eq("tenant_id", current_user.tenant_id).execute()
+        if not check.data:
+            self.db.table("tenant_ai_settings").insert({
+                "tenant_id": current_user.tenant_id,
+                "api_key": None,
+                "base_url": None,
+                "model_name": "llama-3.1-8b-instant",
+                "temperature": 0.2
+            }).execute()
+
+        if not update_dict:
+            return await self.get_tenant_ai_settings(current_user)
+
+        # Update in DB
+        update_dict["updated_at"] = datetime.utcnow().isoformat()
+        response = self.db.table("tenant_ai_settings").update(update_dict).eq(
+            "tenant_id", current_user.tenant_id
+        ).execute()
+
+        if not response.data:
+            raise ValueError("Failed to update AI settings")
+
+        data = response.data[0]
+        raw_key = data.get("api_key")
+        if raw_key:
+            data["api_key"] = raw_key[:6] + "••••" if len(raw_key) > 6 else "••••"
+
+        return TenantAISettingsResponse(**data)

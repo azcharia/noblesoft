@@ -7,6 +7,10 @@ from app.models.tenant import (
     SubscriptionUpdateResponse,
     TenantResponse,
     TenantUpdate,
+    TenantRegisterRequest,
+    TenantRegisterResponse,
+    TenantAISettingsResponse,
+    TenantAISettingsUpdate,
 )
 from app.services.tenant_service import TenantService
 
@@ -60,6 +64,55 @@ async def update_subscription_tier(
     service = TenantService()
     try:
         return await service.update_subscription_tier(payload, current_user)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+
+
+@router.post(
+    "/register",
+    response_model=TenantRegisterResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Register a new tenant store and owner account",
+)
+async def register_tenant(payload: TenantRegisterRequest):
+    service = TenantService()
+    try:
+        return await service.register_new_tenant(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+
+
+@router.get(
+    "/current/ai-settings",
+    response_model=TenantAISettingsResponse,
+    summary="Get current tenant's AI settings",
+)
+async def get_tenant_ai_settings(
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    service = TenantService()
+    try:
+        return await service.get_tenant_ai_settings(current_user)
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+
+
+@router.patch(
+    "/current/ai-settings",
+    response_model=TenantAISettingsResponse,
+    summary="Update current tenant's AI settings",
+)
+async def update_tenant_ai_settings(
+    payload: TenantAISettingsUpdate,
+    current_user: CurrentUser = Depends(require_owner),
+):
+    service = TenantService()
+    try:
+        return await service.update_tenant_ai_settings(payload, current_user)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:

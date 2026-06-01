@@ -12,14 +12,25 @@ logger = logging.getLogger(__name__)
 
 
 class GroqLLMClient:
-    """Client for Groq API with ultra-low latency inference"""
-    
-    def __init__(self):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+    ):
         """Initialize Groq client"""
-        self.client = Groq(api_key=settings.GROQ_API_KEY)
-        self.model = settings.GROQ_MODEL
+        final_key = api_key or settings.GROQ_API_KEY
+        final_url = base_url or None
+        
+        # Fallback to prevent crash on empty key
+        if not final_key:
+            final_key = "placeholder_key"
+
+        self.client = Groq(api_key=final_key, base_url=final_url)
+        self.model = model or settings.GROQ_MODEL
         self.max_tokens = 2048
-        self.temperature = 0.7
+        self.temperature = temperature if temperature is not None else 0.2
     
     def chat_completion(
         self,

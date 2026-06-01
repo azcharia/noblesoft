@@ -97,12 +97,12 @@ describe('TeamManagementPanel', () => {
   it('renders seat usage summary from API responses', async () => {
     render(<TeamManagementPanel currentUserId="owner-1" currentUserRole="owner" />)
 
-    await screen.findByText('Team Members')
+    await screen.findByText('Anggota Tim & Karyawan')
 
-    expect(screen.getByText('Active Seats')).toBeInTheDocument()
-    expect(screen.getByText('Available Seats')).toBeInTheDocument()
-    expect(screen.getByText('Total Members')).toBeInTheDocument()
-    expect(screen.getByText('of 5 seats')).toBeInTheDocument()
+    expect(screen.getByText('Seat Aktif')).toBeInTheDocument()
+    expect(screen.getByText('Seat Tersedia')).toBeInTheDocument()
+    expect(screen.getByText('Total Anggota')).toBeInTheDocument()
+    expect(screen.getByText('dari 1000 seat')).toBeInTheDocument()
   })
 
   it('calls deactivate endpoint and reloads users list', async () => {
@@ -153,12 +153,12 @@ describe('TeamManagementPanel', () => {
   it('submits invite with simple payload and refetches users', async () => {
     render(<TeamManagementPanel currentUserId="owner-1" currentUserRole="owner" />)
 
-    await screen.findByText('Team Members')
+    await screen.findByText('Anggota Tim & Karyawan')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Invite' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Undang Member' }))
     await userEvent.type(screen.getByLabelText('Email'), 'new@noblesoft.test')
     await userEvent.type(screen.getByLabelText('Nama Lengkap'), 'New Member')
-    await userEvent.click(screen.getByRole('button', { name: 'Invite Member' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Undang Anggota' }))
 
     await waitFor(() => {
       expect(apiMocks.inviteUser).toHaveBeenCalledWith({
@@ -182,12 +182,12 @@ describe('TeamManagementPanel', () => {
 
     render(<TeamManagementPanel currentUserId="owner-1" currentUserRole="owner" />)
 
-    await screen.findByText('Team Members')
+    await screen.findByText('Anggota Tim & Karyawan')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Invite' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Undang Member' }))
     await userEvent.type(screen.getByLabelText('Email'), 'new@noblesoft.test')
     await userEvent.type(screen.getByLabelText('Nama Lengkap'), 'New Member')
-    await userEvent.click(screen.getByRole('button', { name: 'Invite Member' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Undang Anggota' }))
 
     await screen.findByText('temp-pass-123')
 
@@ -202,18 +202,18 @@ describe('TeamManagementPanel', () => {
   it('clears temporary password when invite dialog is closed', async () => {
     render(<TeamManagementPanel currentUserId="owner-1" currentUserRole="owner" />)
 
-    await screen.findByText('Team Members')
+    await screen.findByText('Anggota Tim & Karyawan')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Invite' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Undang Member' }))
     await userEvent.type(screen.getByLabelText('Email'), 'new@noblesoft.test')
     await userEvent.type(screen.getByLabelText('Nama Lengkap'), 'New Member')
-    await userEvent.click(screen.getByRole('button', { name: 'Invite Member' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Undang Anggota' }))
 
     await screen.findByText('temp-pass-123')
 
     await userEvent.click(screen.getByRole('button', { name: 'Close invite modal' }))
 
-    await userEvent.click(screen.getByRole('button', { name: 'Invite' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Undang Member' }))
 
     expect(screen.queryByText('temp-pass-123')).not.toBeInTheDocument()
     expect(screen.getByLabelText('Email')).toBeInTheDocument()
@@ -226,12 +226,12 @@ describe('TeamManagementPanel', () => {
 
     render(<TeamManagementPanel currentUserId="owner-1" currentUserRole="owner" />)
 
-    await screen.findByText('Team Members')
+    await screen.findByText('Anggota Tim & Karyawan')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Invite' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Undang Member' }))
     await userEvent.type(screen.getByLabelText('Email'), 'new@noblesoft.test')
     await userEvent.type(screen.getByLabelText('Nama Lengkap'), 'New Member')
-    await userEvent.click(screen.getByRole('button', { name: 'Invite Member' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Undang Anggota' }))
 
     await waitFor(() => {
       expect(screen.getByText('Email sudah terdaftar pada tenant ini.')).toBeInTheDocument()

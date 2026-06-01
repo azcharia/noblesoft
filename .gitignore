@@ -17,35 +17,17 @@ frontend/.next/
 # TypeScript build cache
 *.tsbuildinfo
 
-# Documentation - Internal/Architecture
-ENVIRONMENT_SECURITY.md
-modelbisnisnoblesoft.md
-PHASE_1_ARCHITECTURE.md
-PHASE_2_COMPLETE.md
-PHASE_3_COMPLETE.md
-PHASE_4_COMPLETE.md
-PHASE_5_COMPLETE.md
-
-# Runtime artifacts and logs (contains Supabase project IDs and debug info)
+# Runtime artifacts and logs
 .runtime/
 *.log
 *.err
 
 # OS and IDE
 .DS_Store
-.vscode/settings.json
+.vscode/
 *.swp
 *.swo
 
-# Audit and Completion Reports
-AUDIT_REPORT.md
-GITHUB_SECURITY_CHECKLIST.md
-PHASE_5_DELTA_COMPLETION.md
-completion+codereview+plan.md
-phase 5 healthcheck audit.md
-phase6-8.md
-
-# Scratch scripts and local documents
-Proposal P2MW NobleSoft 2026.pdf
-extract_pdf.py
-extract_pdf_text.py
+# Testing caches
+.pytest_cache/
+.antigravitycli/

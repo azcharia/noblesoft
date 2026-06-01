@@ -105,8 +105,8 @@ class CurrentUser:
         return self.role in ["owner", "admin"]
     
     def has_tier(self, required_tiers: list[str]) -> bool:
-        """Check if user's subscription tier is in the required list"""
-        return self.subscription_tier in required_tiers
+        """Check if user's subscription tier is in the required list - bypassed for open-source"""
+        return True
 
     def has_permission(self, permission_code: str) -> bool:
         """Check if user has an explicit or wildcard permission."""
@@ -302,12 +302,7 @@ def require_tier(allowed_tiers: list[str]):
         Dependency function that validates subscription tier
     """
     async def tier_checker(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
-        if current_user.subscription_tier not in allowed_tiers:
-            raise AuthorizationError(
-                f"This feature requires one of the following subscription tiers: {', '.join(allowed_tiers)}. "
-                f"Your current tier: {current_user.subscription_tier}. "
-                f"Please upgrade your subscription to access this feature."
-            )
+        # Bypassed for open-source
         return current_user
     
     return tier_checker
@@ -338,27 +333,8 @@ def require_add_on(required_add_on: str):
     """Dependency factory to require a purchased add-on for a feature."""
 
     async def add_on_checker(current_user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
-        in_context_codes = _extract_add_on_codes(current_user.active_add_ons)
-        if required_add_on in in_context_codes:
-            return current_user
-
-        try:
-            db = get_supabase_admin_client()
-            tenant_response = db.table("tenants").select("active_add_ons").eq(
-                "id", current_user.tenant_id
-            ).single().execute()
-            db_codes = _extract_add_on_codes((tenant_response.data or {}).get("active_add_ons"))
-            if required_add_on in db_codes:
-                return current_user
-        except Exception:
-            logger.debug(
-                "Failed to resolve add-ons for tenant_id=%s", current_user.tenant_id
-            )
-
-        raise AuthorizationError(
-            f"This feature requires add-on '{required_add_on}'. "
-            "Please update your subscription to continue."
-        )
+        # Bypassed for open-source
+        return current_user
 
     return add_on_checker
 
@@ -400,11 +376,7 @@ def require_admin(current_user: CurrentUser = Depends(get_current_user)) -> Curr
 def require_enterprise_admin(
     current_user: CurrentUser = Depends(require_admin),
 ) -> CurrentUser:
-    """Require both enterprise tier and admin privileges."""
-    if not current_user.has_tier(["enterprise"]):
-        raise AuthorizationError(
-            "This action requires an active enterprise subscription"
-        )
+    """Require both enterprise tier and admin privileges - bypassed for open-source."""
     return current_user
 
 

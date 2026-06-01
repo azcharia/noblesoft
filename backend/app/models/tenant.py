@@ -51,3 +51,44 @@ class SubscriptionUpdateResponse(BaseModel):
     tenant: TenantResponse
     previous_tier: SubscriptionTier
     updated_tier: SubscriptionTier
+
+
+class TenantRegisterRequest(BaseModel):
+    """Request payload for registering a new tenant store and owner account."""
+
+    company_name: str = Field(..., min_length=2, max_length=255)
+    email: str = Field(..., min_length=3, max_length=255)
+    password: str = Field(..., min_length=6, max_length=100)
+    full_name: str = Field(..., min_length=2, max_length=255)
+
+
+class TenantRegisterResponse(BaseModel):
+    """Response returned after successful tenant registration."""
+
+    tenant_id: str
+    company_name: str
+    user_id: str
+    email: str
+    message: str
+
+
+class TenantAISettingsResponse(BaseModel):
+    """AI settings returned by management endpoints."""
+
+    tenant_id: str
+    api_key: Optional[str] = None
+    base_url: Optional[str] = None
+    model_name: str = "llama-3.1-8b-instant"
+    temperature: float = 0.2
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TenantAISettingsUpdate(BaseModel):
+    """Request payload for updating tenant-specific AI settings."""
+
+    api_key: Optional[str] = Field(None, max_length=255)
+    base_url: Optional[str] = Field(None, max_length=512)
+    model_name: Optional[str] = Field(None, max_length=100)
+    temperature: Optional[float] = Field(None, ge=0.0, le=2.0)
