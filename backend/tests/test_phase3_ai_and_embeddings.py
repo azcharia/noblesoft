@@ -203,7 +203,7 @@ def test_get_suggested_questions_data_aware(monkeypatch: pytest.MonkeyPatch):
 
     assert len(suggestions) >= 5
     assert any("stok" in s.lower() for s in suggestions)
-    assert any("invoice" in s.lower() for s in suggestions)
+    assert any("nota" in s.lower() for s in suggestions)
 
 
 def test_create_product_triggers_embedding_sync(monkeypatch: pytest.MonkeyPatch):
