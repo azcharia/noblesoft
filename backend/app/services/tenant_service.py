@@ -390,6 +390,11 @@ class TenantService:
     ) -> TenantAISettingsResponse:
         update_dict = payload.model_dump(exclude_none=True)
         
+        # Prevent overwriting database key with visual mask from frontend
+        if "api_key" in update_dict and update_dict["api_key"] is not None:
+            if "••••" in str(update_dict["api_key"]):
+                del update_dict["api_key"]
+        
         # Check if row exists, if not initialize it
         check = self.db.table("tenant_ai_settings").select("tenant_id").eq("tenant_id", current_user.tenant_id).execute()
         if not check.data:
