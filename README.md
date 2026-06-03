@@ -1,6 +1,6 @@
 <div align="center">
   <img src="logo/noblesoft.jpg" alt="NobleSoft Logo" width="120" height="120" style="border-radius: 24px; margin-bottom: 16px;" />
-  <h1>🚀 NobleSoft</h1>
+  <h1>NobleSoft</h1>
   <p><b>Aplikasi Kasir Digital & Manajemen Stok Berbasis AI yang Sangat Sederhana dan 100% Open Source</b></p>
   
   [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
