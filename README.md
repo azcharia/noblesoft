@@ -108,7 +108,7 @@ SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT-ID].supabase.co:5432/postgres
 GROQ_API_KEY=your-groq-api-key
-GROQ_MODEL=llama-3.3-70b-specdec
+GROQ_MODEL=llama-3.3-70b-versatile
 ```
 
 **Di folder `frontend/`:**

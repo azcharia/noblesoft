@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     
     # AI/ML Configuration - 100% FREE with Groq
     GROQ_API_KEY: str
-    GROQ_MODEL: str = "llama-3.3-70b-specdec"  # FREE Groq model
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"  # FREE Groq model
     TAVILY_API_KEY: str = ""
     TAVILY_ENABLED: bool = True
     TAVILY_MAX_RESULTS: int = 5
