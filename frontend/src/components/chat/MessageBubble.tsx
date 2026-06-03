@@ -39,13 +39,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       
       <div className={`flex flex-col gap-2 max-w-[70%] ${isUser ? 'items-end' : 'items-start'}`}>
         <Card
-          className={`p-4 ${
+          className={`p-4 shadow-md ${
             isUser
-              ? 'border-transparent bg-gradient-accent text-primary-foreground'
-              : 'border-border bg-surface'
+              ? 'border-transparent bg-blue-700 text-white'
+              : 'border-slate-300 bg-white text-slate-900'
           }`}
         >
-          <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none break-words">
+          <div className={`prose md:prose-lg max-w-none break-words ${isUser ? 'text-white' : 'text-slate-900 font-medium'}`}>
             <ReactMarkdown>
               {message.content}
             </ReactMarkdown>
@@ -60,7 +60,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           />
         )}
         
-        <span className="text-xs text-muted-foreground">
+        <span className="text-sm font-bold text-slate-600">
           {message.timestamp.toLocaleTimeString('id-ID', {
             hour: '2-digit',
             minute: '2-digit',

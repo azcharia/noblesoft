@@ -61,6 +61,7 @@ class AIAgentService:
             tenant_groq = await self._resolve_tenant_groq_client(current_user.tenant_id)
             if tenant_groq:
                 self.groq_client = tenant_groq
+                self.rag_engine.groq_client = tenant_groq
 
             # Validate subscription tier (bypassed for open source)
             pass
@@ -364,6 +365,21 @@ class AIAgentService:
             function_call = self._parse_function_call(ai_response)
 
             if function_call:
+                # Check for double confirmation
+                pending_conf = await self._should_confirm_and_prepare(function_call, current_user)
+                if pending_conf:
+                    result = pending_conf
+                    result["sources"] = sources
+                    result["retrieved_count"] = retrieved_count
+                    result["manager_result_summary"] = {
+                        "status": "success",
+                        "retrieved_count": retrieved_count,
+                        "source_count": len(sources),
+                        "top_k_used": top_k,
+                        "response_preview": self._to_preview(result["response"]),
+                    }
+                    return result
+
                 # Step 5: Execute function
                 execution_result = await self._execute_function(
                     function_call,
@@ -592,6 +608,7 @@ class AIAgentService:
             tenant_groq = await self._resolve_tenant_groq_client(current_user.tenant_id)
             if tenant_groq:
                 self.groq_client = tenant_groq
+                self.rag_engine.groq_client = tenant_groq
             # Step 1: Retrieve relevant context
             top_k = self._resolve_rag_top_k(query=query, assistant_mode="function_calling")
             rag_result = await self._query_rag(
@@ -636,6 +653,14 @@ class AIAgentService:
             }
 
             if function_call:
+                # Check for double confirmation
+                pending_conf = await self._should_confirm_and_prepare(function_call, current_user)
+                if pending_conf:
+                    result = pending_conf
+                    result["sources"] = rag_result.get("sources", [])
+                    result["retrieved_count"] = rag_result.get("retrieved_count", 0)
+                    return result
+
                 # Step 5: Execute function
                 execution_result = await self._execute_function(
                     function_call,
@@ -1372,3 +1397,138 @@ class AIAgentService:
         except Exception as e:
             logger.warning(f"Failed to resolve tenant specific Groq client for {tenant_id}: {str(e)}")
             return None
+
+    async def _should_confirm_and_prepare(
+        self,
+        function_call: Dict[str, Any],
+        current_user: CurrentUser
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Check if function requires confirmation and return confirmation response dictionary if it does.
+        """
+        func_name = function_call.get("function")
+        if func_name in ["create_product", "update_stock", "create_invoice"]:
+            confirmation_data = await self._prepare_confirmation_data(function_call, current_user)
+            user_context = {
+                "tenant_id": current_user.tenant_id,
+                "company_name": current_user.company_name,
+                "subscription_tier": current_user.subscription_tier
+            }
+            
+            action_desc = "penjualan" if func_name == "create_invoice" else ("stok" if func_name == "update_stock" else "produk baru")
+            response_msg = (
+                f"Saya telah menyiapkan draf transaksi {action_desc} untuk "
+                f"**{confirmation_data.get('item_name')}**. Silakan konfirmasi detailnya "
+                f"pada kotak dialog konfirmasi di layar Anda."
+            )
+            
+            return {
+                "response": response_msg,
+                "sources": [],
+                "retrieved_count": 0,
+                "user_context": user_context,
+                "assistant_mode": "function_calling",
+                "orchestration_mode": "single",
+                "execution_result": {
+                    "requires_confirmation": True,
+                    "confirmation_data": confirmation_data,
+                    "pending_action": function_call
+                }
+            }
+        return None
+
+    async def _prepare_confirmation_data(
+        self,
+        function_call: Dict[str, Any],
+        current_user: CurrentUser
+    ) -> Dict[str, Any]:
+        """Prepare double confirmation details for mutating actions."""
+        function_name = function_call.get("function")
+        parameters = function_call.get("parameters", {})
+        
+        confirmation_data = {
+            "action_type": "sell",
+            "item_name": "",
+            "quantity": 1,
+            "unit_name": "pcs",
+            "price_per_item": 0,
+            "total_price": 0,
+            "customer_name": None,
+            "payment_status": "paid",
+            "stock_before": 0,
+            "stock_after": 0
+        }
+        
+        try:
+            from app.services.product_service import ProductService
+            prod_service = ProductService()
+            
+            if function_name == "update_stock":
+                product_id = parameters.get("product_id")
+                adjustment = parameters.get("adjustment", 0)
+                
+                product = await prod_service.get_product(product_id, current_user)
+                
+                confirmation_data["item_name"] = product.name
+                confirmation_data["quantity"] = abs(adjustment)
+                confirmation_data["price_per_item"] = float(product.unit_price)
+                confirmation_data["total_price"] = float(product.unit_price) * abs(adjustment)
+                confirmation_data["stock_before"] = product.stock_quantity
+                confirmation_data["stock_after"] = product.stock_quantity + adjustment
+                confirmation_data["action_type"] = "restock" if adjustment > 0 else "sell"
+                confirmation_data["payment_status"] = "paid"
+                
+            elif function_name == "create_invoice":
+                customer_name = parameters.get("customer_name")
+                payment_status = parameters.get("payment_status", "unpaid")
+                items = parameters.get("items", [])
+                
+                confirmation_data["customer_name"] = customer_name
+                confirmation_data["payment_status"] = "paid" if payment_status == "paid" else "unpaid"
+                confirmation_data["action_type"] = "sell" if payment_status == "paid" else "debt"
+                
+                if items:
+                    total = 0.0
+                    first_item_desc = items[0].get("description", "")
+                    
+                    prod_id = items[0].get("product_id")
+                    if prod_id:
+                        try:
+                            product = await prod_service.get_product(prod_id, current_user)
+                            confirmation_data["stock_before"] = product.stock_quantity
+                            qty = items[0].get("quantity", 0)
+                            confirmation_data["stock_after"] = max(0, product.stock_quantity - qty)
+                            if not first_item_desc:
+                                first_item_desc = product.name
+                        except Exception:
+                            pass
+                    
+                    for item in items:
+                        qty = item.get("quantity", 1)
+                        price = item.get("unit_price", 0)
+                        total += qty * price
+                    
+                    confirmation_data["total_price"] = total
+                    confirmation_data["quantity"] = items[0].get("quantity", 1)
+                    confirmation_data["price_per_item"] = items[0].get("unit_price", 0)
+                    
+                    if len(items) > 1:
+                        confirmation_data["item_name"] = f"{first_item_desc} (+ {len(items) - 1} barang lainnya)"
+                    else:
+                        confirmation_data["item_name"] = first_item_desc
+                        
+            elif function_name == "create_product":
+                confirmation_data["item_name"] = parameters.get("name", "")
+                qty = parameters.get("stock_quantity", 0)
+                price = parameters.get("unit_price", 0)
+                confirmation_data["quantity"] = qty
+                confirmation_data["price_per_item"] = float(price)
+                confirmation_data["total_price"] = float(price * qty)
+                confirmation_data["stock_before"] = 0
+                confirmation_data["stock_after"] = qty
+                confirmation_data["action_type"] = "restock"
+                confirmation_data["payment_status"] = "paid"
+        except Exception as e:
+            logger.error(f"Error preparing confirmation data: {str(e)}")
+            
+        return confirmation_data

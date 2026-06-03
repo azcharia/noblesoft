@@ -37,9 +37,9 @@ class RAGEngine:
         else:
             raise ValueError("Local embeddings must be enabled for free operation")
     
-    def _generate_query_embedding(self, query: str) -> List[float]:
+    async def _generate_query_embedding(self, query: str) -> List[float]:
         """
-        Generate embedding for query using FREE local model
+        Generate embedding for query using FREE local model asynchronously
         
         Args:
             query: Query text
@@ -48,7 +48,10 @@ class RAGEngine:
             Embedding vector
         """
         try:
-            embedding = self.embedding_model.encode(query, convert_to_numpy=True)
+            import asyncio
+            embedding = await asyncio.to_thread(
+                self.embedding_model.encode, query, convert_to_numpy=True
+            )
             return embedding.tolist()
         except Exception as e:
             logger.error(f"Error generating query embedding: {str(e)}")
@@ -73,8 +76,8 @@ class RAGEngine:
             Dictionary with response and retrieved documents
         """
         try:
-            # Step 1: Generate query embedding using FREE local model
-            query_embedding = self._generate_query_embedding(query)
+            # Step 1: Generate query embedding using FREE local model asynchronously
+            query_embedding = await self._generate_query_embedding(query)
             
             # Step 2: Retrieve relevant documents from pgvector (tenant-scoped)
             retrieved_docs = await self._retrieve_documents(

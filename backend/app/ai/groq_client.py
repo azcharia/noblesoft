@@ -2,7 +2,7 @@
 Groq LLM Client
 Ultra-low latency LLM inference using Groq API
 """
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 import logging
 from groq import Groq
 
@@ -32,6 +32,51 @@ class GroqLLMClient:
         self.max_tokens = 2048
         self.temperature = temperature if temperature is not None else 0.2
     
+    def transcribe_audio(
+        self,
+        audio_file: Any,
+        model: str = "whisper-large-v3-turbo",
+        language: str = "id",
+        prompt: Optional[str] = None,
+    ) -> str:
+        """
+        Transcribe audio using Groq Whisper API
+        
+        Args:
+            audio_file: Binary audio file object
+            model: Whisper model to use
+            language: ISO 639-1 language code (default 'id' for Indonesian)
+            prompt: Optional context prompt to improve accuracy
+            
+        Returns:
+            Transcribed text
+        """
+        try:
+            transcription = self.client.audio.transcriptions.create(
+                file=audio_file,
+                model=model,
+                language=language,
+                prompt=prompt,
+                response_format="json",
+            )
+            return transcription.text
+        except Exception as e:
+            logger.error(f"Groq Transcription error: {str(e)}")
+            raise Exception(f"Failed to transcribe audio: {str(e)}")
+    
+    async def transcribe_audio_async(
+        self,
+        audio_file: Any,
+        model: str = "whisper-large-v3-turbo",
+        language: str = "id",
+        prompt: Optional[str] = None,
+    ) -> str:
+        """Async version of audio transcription."""
+        import asyncio
+        return await asyncio.to_thread(
+            self.transcribe_audio, audio_file, model, language, prompt
+        )
+
     def chat_completion(
         self,
         messages: List[Dict[str, str]],

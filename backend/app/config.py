@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: str  # Public anon key for client-side
     SUPABASE_SERVICE_ROLE_KEY: str  # Service role key for server-side admin operations
+    DATABASE_URL: str = ""  # Direct connection string for migrations (optional for API runtime)
     
     # JWT Configuration
     JWT_SECRET: str  # Supabase JWT secret for token verification
@@ -48,7 +49,7 @@ class Settings(BaseSettings):
     
     # AI/ML Configuration - 100% FREE with Groq
     GROQ_API_KEY: str
-    GROQ_MODEL: str = "openai/gpt-oss-120b"  # FREE Groq model
+    GROQ_MODEL: str = "llama-3.3-70b-specdec"  # FREE Groq model
     TAVILY_API_KEY: str = ""
     TAVILY_ENABLED: bool = True
     TAVILY_MAX_RESULTS: int = 5

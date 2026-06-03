@@ -35,9 +35,6 @@ async function apiRequest<T>(
   })
   
   if (!token) {
-    if (attempt < MAX_AUTH_RETRY_ATTEMPTS) {
-      return apiRequest<T>(endpoint, options, attempt + 1)
-    }
     throw new APIError('No authentication token available', 401)
   }
   
@@ -491,8 +488,39 @@ export const apiClient = {
         body: JSON.stringify({ message, conversation_history: conversationHistory }),
       }),
     
+    confirm: (pendingAction: any) =>
+      apiRequest<ChatResponse>('/chat/confirm', {
+        method: 'POST',
+        body: JSON.stringify(pendingAction),
+      }),
+    
     getSuggestions: () =>
       apiRequest<{ suggestions: string[] }>('/chat/suggestions', { method: 'GET' }),
+    
+    transcribe: async (audioBlob: Blob) => {
+      const formData = new FormData()
+      formData.append('file', audioBlob, 'recording.webm')
+      
+      const token = await getSessionToken({ retries: 2, ensureHydrated: true })
+      
+      const response = await fetch(`${API_BASE_URL}/chat/transcribe`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new APIError(
+          errorData.detail || 'Gagal mengirim file suara',
+          response.status
+        )
+      }
+      
+      return response.json() as Promise<{ text: string; language: string }>
+    },
     
     functionCall: (message: string) =>
       apiRequest<ChatResponse>('/chat/function-call', {

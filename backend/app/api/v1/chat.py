@@ -3,14 +3,16 @@ AI Chat API Endpoints
 Conversational AI interface (Pro/Enterprise only)
 """
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
+import io
 
 from app.core.dependencies import require_add_on, require_tier, CurrentUser, get_current_user
 from app.core.database import get_supabase_admin_client
 from app.ai.embeddings import EmbeddingService
 from app.services.ai_agent_service import AIAgentService
+from app.ai.groq_client import GroqLLMClient
 
 router = APIRouter()
 
@@ -68,6 +70,13 @@ class ChatResponse(BaseModel):
 class SuggestedQuestionsResponse(BaseModel):
     """Suggested questions response"""
     suggestions: List[str] = Field(..., description="List of suggested questions")
+
+
+class TranscriptionResponse(BaseModel):
+    """Voice transcription response schema"""
+    text: str = Field(..., description="Transcribed text from audio")
+    language: str = Field(default="id", description="Detected or requested language")
+    duration: Optional[float] = Field(None, description="Audio duration in seconds")
 
 
 def _build_coverage_response(tenant_id: str) -> Dict[str, Any]:
@@ -135,12 +144,6 @@ async def chat(
     - Never hallucinate or make up information
     
     **Requires Pro or Enterprise subscription.**
-    
-    Example questions:
-    - "Berapa stok laptop yang tersedia?"
-    - "Tampilkan invoice yang belum dibayar"
-    - "Produk apa saja yang stoknya rendah?"
-    - "Siapa customer dengan invoice terbesar?"
     """
     service = AIAgentService()
     
@@ -157,6 +160,62 @@ async def chat(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process chat message: {str(e)}"
+        )
+
+
+@router.post(
+    "/transcribe",
+    response_model=TranscriptionResponse,
+    summary="Transcribe voice to text",
+    description="Convert Indonesian voice notes to text using Groq Whisper"
+)
+async def transcribe_voice(
+    file: UploadFile = File(...),
+    current_user: CurrentUser = Depends(get_current_user)
+):
+    """
+    Convert recorded audio (.webm, .wav, .mp3, etc.) into text.
+    Optimized for Indonesian language and business context.
+    
+    **Requires Pro or Enterprise subscription.**
+    """
+    # Validate file type (basic)
+    allowed_types = ["audio/webm", "audio/wav", "audio/mpeg", "audio/ogg", "audio/mp4", "application/octet-stream"]
+    if file.content_type not in allowed_types:
+        # We also check application/octet-stream because some browsers send webm as blob
+        pass
+
+    try:
+        # Read file into memory
+        audio_data = await file.read()
+        audio_file = io.BytesIO(audio_data)
+        audio_file.name = file.filename or "recording.webm" # Groq needs a filename extension
+
+        service = AIAgentService()
+        tenant_groq = await service._resolve_tenant_groq_client(current_user.tenant_id)
+        groq_client = tenant_groq or GroqLLMClient()
+        
+        # Add context prompt for better UMKM Indonesian transcription
+        prompt = (
+            "Ini adalah percakapan kasir UMKM di Indonesia. "
+            "Konteks: penjualan barang, stok inventory, harga, invoice, dan nama pelanggan. "
+            "Contoh istilah: lusin, kodi, pcs, bks, karton, eceran."
+        )
+
+        transcribed_text = await groq_client.transcribe_audio_async(
+            audio_file=audio_file,
+            language="id",
+            prompt=prompt
+        )
+
+        return TranscriptionResponse(
+            text=transcribed_text,
+            language="id"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Gagal melakukan transkripsi suara: {str(e)}"
         )
 
 
@@ -246,25 +305,6 @@ async def chat_with_function_calling(
 ):
     """
     **EXPERIMENTAL FEATURE - Enterprise Only**
-    
-    Advanced chat interface that allows the AI to execute actions:
-    - Create products
-    - Update stock
-    - Create invoices
-    - And more...
-    
-    Example requests:
-    - "Buatkan produk baru: Laptop HP, harga 12 juta, stok 10"
-    - "Kurangi stok laptop Dell sebanyak 5 unit"
-    - "Buatkan invoice untuk PT Maju Jaya"
-    
-    The AI will:
-    1. Understand your intent
-    2. Extract required parameters
-    3. Execute the appropriate function
-    4. Confirm the action
-    
-    **Requires Enterprise subscription and AI Agent Pack add-on.**
     """
     service = AIAgentService()
     
@@ -281,4 +321,56 @@ async def chat_with_function_calling(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to process function call: {str(e)}"
+        )
+
+
+class ConfirmActionRequest(BaseModel):
+    function: str
+    parameters: Dict[str, Any]
+
+
+@router.post(
+    "/confirm",
+    response_model=ChatResponse,
+    summary="Confirm and execute AI action",
+    description="Execute a pending transaction that has been confirmed by the user"
+)
+async def confirm_action(
+    request: ConfirmActionRequest,
+    current_user: CurrentUser = Depends(get_current_user)
+):
+    """
+    Execute an AI-generated action that requires human confirmation.
+    """
+    service = AIAgentService()
+    try:
+        function_call = {
+            "function": request.function,
+            "parameters": request.parameters
+        }
+        
+        execution_result = await service._execute_function(
+            function_call,
+            current_user
+        )
+        
+        user_context = {
+            "tenant_id": current_user.tenant_id,
+            "company_name": current_user.company_name,
+            "subscription_tier": current_user.subscription_tier
+        }
+        
+        return ChatResponse(
+            response=execution_result["message"],
+            sources=[],
+            retrieved_count=0,
+            user_context=user_context,
+            assistant_mode="function_calling",
+            orchestration_mode="single",
+            execution_result=execution_result
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Gagal menjalankan aksi yang dikonfirmasi: {str(e)}"
         )

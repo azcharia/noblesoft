@@ -15,22 +15,22 @@ interface SuggestedQuestionsProps {
 export function SuggestedQuestions({ suggestions, onSelect }: SuggestedQuestionsProps) {
   return (
     <div className="w-full max-w-2xl">
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles className="h-4 w-4 text-accent" />
-        <span className="text-sm font-medium text-muted-foreground">
+      <div className="flex items-center gap-2 mb-4 justify-center">
+        <Sparkles className="h-5 w-5 text-accent" />
+        <span className="text-base font-bold text-slate-700">
           Pertanyaan yang disarankan:
         </span>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {suggestions.map((suggestion, index) => (
           <Button
             key={index}
             variant="outline"
             onClick={() => onSelect(suggestion)}
-            className="h-auto justify-start border-border/80 px-3.5 py-2 text-left hover:border-accent/30 hover:bg-accent/5"
+            className="h-auto min-h-[56px] justify-start border-slate-300 px-4 py-3 text-left hover:border-brand-blue hover:bg-slate-50 shadow-sm"
           >
-            <span className="text-xs md:text-sm text-foreground">{suggestion}</span>
+            <span className="text-base font-semibold text-slate-900">{suggestion}</span>
           </Button>
         ))}
       </div>

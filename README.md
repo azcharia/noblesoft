@@ -27,6 +27,7 @@ Dan AI akan otomatis mencatat transaksi, memperbarui stok di database, serta mem
 ## ✨ Fitur Utama
 
 - 🤖 **AI Asisten Kasir & Stok**: Cukup mengobrol dengan AI untuk mencatat penjualan, memperbarui stok, atau bertanya tentang kondisi keuangan toko.
+- 🔑 **Bring Your Own Key (BYOK)**: Keamanan privasi data maksimal dengan integrasi API Key Groq terisolasi per tenant. Selengkapnya di [SETUP_GROQ_BYOK.md](file:///D:/STUDY/Kuliah/flutter/PROJECT/noblesoft/SETUP_GROQ_BYOK.md).
 - 📦 **Manajemen Inventory Sederhana**: Pantau stok produk, peringatan ketika stok menipis (*low stock*), dan nilai estimasi aset toko.
 - 🧾 **Pembuat Invoice & Struk Otomatis**: Buat dan unduh struk penjualan digital langsung setelah pencatatan selesai.
 - 📊 **Dasbor Keuangan Ringkas**: Tiga kartu kas minimalis (Uang Masuk, Laba Bersih Estimasi, dan Stok Habis) langsung di halaman utama.
@@ -77,10 +78,18 @@ Sebelum memulai, pastikan komputer Anda sudah terpasang:
 
 ### Langkah 1: Siapkan Database Supabase & Autentikasi
 1. Masuk ke dasbor Supabase Anda dan buat proyek baru.
-2. Buka menu **SQL Editor** di proyek Supabase Anda.
-3. Salin dan jalankan (Run) isi file SQL berikut secara berurutan:
-   - `supabase_setup.sql` (untuk membuat tabel produk, invoice, dan data awal).
-4. **Konfigurasi Keamanan Autentikasi (Penting agar Pendaftaran Berjalan Lancar):**
+2. **Setup Skema Database (Pilih salah satu metode berikut):**
+   - **Metode A (Migrasi CLI Otomatis - Direkomendasikan)**: 
+     Tambahkan variable `DATABASE_URL` pada berkas `.env` di backend (lihat Langkah 2), lalu jalankan perintah migrasi dari folder `frontend/`:
+     ```bash
+     pnpm run db:migrate
+     ```
+   - **Metode B (Manual SQL Editor)**: Buka menu **SQL Editor** di dasbor Supabase Anda, lalu salin dan jalankan isi berkas `supabase_setup.sql`.
+   - **Metode C (Supabase CLI)**: Jika Anda menggunakan Supabase CLI secara lokal, jalankan perintah berikut di folder root:
+     ```bash
+     supabase db push
+     ```
+3. **Konfigurasi Keamanan Autentikasi (Penting agar Pendaftaran Berjalan Lancar):**
    - Di dasbor Supabase, buka menu **Authentication** -> **Providers** -> **Email**.
    - **Nonaktifkan (Disable)** opsi **Confirm email** jika Anda ingin pengguna baru bisa langsung masuk (login) tanpa perlu memverifikasi email terlebih dahulu.
    - **Aktifkan (Enable)** opsi **Allow public sign-ups** agar pendaftaran toko baru dari form aplikasi dapat berjalan.
@@ -95,9 +104,11 @@ Buat file `.env` di folder backend dan frontend Anda untuk menghubungkan ke data
 Salin berkas `.env.example` menjadi `.env` lalu isi:
 ```env
 SUPABASE_URL=https://your-project-ref.supabase.co
-SUPABASE_KEY=your-supabase-anon-key
+SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+DATABASE_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT-ID].supabase.co:5432/postgres
 GROQ_API_KEY=your-groq-api-key
+GROQ_MODEL=llama-3.3-70b-specdec
 ```
 
 **Di folder `frontend/`:**
