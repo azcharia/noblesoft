@@ -35,6 +35,7 @@ export function ChatInterface({ noBorder = false }: ChatInterfaceProps) {
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [suggestionsError, setSuggestionsError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   
   // Voice Recording State
@@ -154,7 +155,9 @@ export function ChatInterface({ noBorder = false }: ChatInterfaceProps) {
   
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight
+    }
   }, [messages])
   
   const loadSuggestions = useCallback(async (attempt: number = 0) => {
@@ -304,10 +307,13 @@ export function ChatInterface({ noBorder = false }: ChatInterfaceProps) {
       !noBorder && "rounded-2xl border border-border bg-card shadow-sm"
     )}>
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth"
+      >
         {messages.length === 0 ? (
           // Empty state
-          <div className="flex flex-col items-center justify-center h-full text-center py-4">
+          <div className="flex flex-col items-center justify-center min-h-full text-center py-4">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-accent shadow-accent">
               <Sparkles className="w-8 h-8 text-white" />
             </div>

@@ -16,14 +16,16 @@ export default async function ChatPage() {
   }
   
   return (
-    <div className="h-[calc(100vh-150px)] lg:h-[calc(100vh-175px)] min-h-[400px] flex flex-col gap-4 overflow-hidden">
-      <PageHeader
-        label="Asisten Pintar"
-        title="Obrolan AI Toko"
-        description="Tanya tentang persediaan stok barang, penjualan, nota keuangan, atau analisis data toko Anda secara langsung."
-      />
+    <div className="h-[calc(100vh-120px)] flex flex-col gap-3 overflow-hidden">
+      <div className="flex-shrink-0">
+        <PageHeader
+          label="Asisten Pintar"
+          title="Obrolan AI Toko"
+          description="Tanya tentang stok, penjualan, atau analisis data toko Anda."
+        />
+      </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden bg-white/30 backdrop-blur-md rounded-2xl border border-border/50 p-4 flex flex-col">
+      <div className="flex-1 min-h-0 bg-card/50 backdrop-blur-sm rounded-2xl border border-border flex flex-col overflow-hidden">
         <ChatInterface noBorder />
       </div>
     </div>

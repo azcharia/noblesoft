@@ -61,6 +61,7 @@ export default async function DashboardLayout({
 
         {/* Sidebar */}
         <Sidebar
+          key={`sidebar-${userWithTenant.id}`}
           user={userWithTenant}
           tenant={tenant}
         />
@@ -68,6 +69,7 @@ export default async function DashboardLayout({
         {/* Main content */}
         <div className="flex-1 flex flex-col overflow-hidden relative z-10">
           <Header
+            key={`header-${userWithTenant.id}`}
             user={userWithTenant}
             companyName={tenant.company_name}
           />

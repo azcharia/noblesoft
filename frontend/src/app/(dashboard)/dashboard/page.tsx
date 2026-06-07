@@ -109,27 +109,27 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
         {/* Asisten AI Kasir Terintegrasi */}
-        <Card className="xl:col-span-2 flex flex-col h-[600px] overflow-hidden glass-card border-none shadow-sm">
-          <CardHeader className="pb-3 border-b border-border bg-muted/20">
-            <CardTitle className="text-lg flex items-center gap-2 text-brand-teal">
-              <MessageSquare className="w-5 h-5 text-brand-blue" />
+        <Card className="xl:col-span-3 flex flex-col h-[750px] overflow-hidden glass-card border-none shadow-sm">
+          <CardHeader className="py-3 px-4 border-b border-border bg-muted/20">
+            <CardTitle className="text-md flex items-center gap-2 text-brand-teal">
+              <MessageSquare className="w-4 h-4 text-brand-blue" />
               Asisten AI Kasir (Tanya Jawab Stok & Nota)
             </CardTitle>
           </CardHeader>
-          <div className="flex-1 flex flex-col min-h-0 overflow-hidden p-4">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <ChatInterface noBorder />
           </div>
         </Card>
 
         {/* Info Samping: Invoices & Quick Access */}
-        <div className="space-y-6 xl:col-span-1">
+        <div className="space-y-4 xl:col-span-1">
           <Card className="glass-card border-none shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg text-brand-teal">Nota Penjualan Terbaru</CardTitle>
+            <CardHeader className="pb-3 px-4">
+              <CardTitle className="text-md text-brand-teal font-bold uppercase tracking-wide">Nota Penjualan Terbaru</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-4">
               {isLoading ? (
                 <p className="text-sm text-muted-foreground">Memuat data nota...</p>
               ) : recentInvoices.length === 0 ? (
@@ -142,14 +142,15 @@ export default function DashboardPage() {
                       className="flex items-center justify-between rounded-xl border border-border bg-background/50 px-3 py-3"
                     >
                       <div>
-                        <p className="font-medium text-foreground">{invoice.invoice_number}</p>
-                        <p className="text-sm text-muted-foreground">{invoice.customer_name}</p>
+                        <p className="font-medium text-foreground text-sm">{invoice.invoice_number}</p>
+                        <p className="text-xs text-muted-foreground">{invoice.customer_name}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-foreground">
+                        <p className="font-semibold text-foreground text-sm">
                           {formatCurrency(invoice.total_amount)}
                         </p>
                         <Badge
+                          className="text-[10px] h-4"
                           variant={
                             invoice.payment_status === 'paid'
                               ? 'default'
@@ -169,24 +170,24 @@ export default function DashboardPage() {
           </Card>
 
           <Card className="glass-card border-none shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg text-brand-teal">Menu Akses Cepat</CardTitle>
+            <CardHeader className="pb-3 px-4">
+              <CardTitle className="text-md text-brand-teal font-bold uppercase tracking-wide">Menu Akses Cepat</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-2 px-4">
               <Link href="/inventory" className="block">
-                <Button variant="outline" className="w-full justify-start gap-2">
+                <Button variant="outline" size="sm" className="w-full justify-start gap-2">
                   <Package className="h-4 w-4 text-muted-foreground" />
                   Atur Stok Barang
                 </Button>
               </Link>
               <Link href="/invoices" className="block">
-                <Button variant="outline" className="w-full justify-start gap-2">
+                <Button variant="outline" size="sm" className="w-full justify-start gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
                   Kelola Nota Pembeli
                 </Button>
               </Link>
               <Link href="/chat" className="block">
-                <Button variant="outline" className="w-full justify-start gap-2">
+                <Button variant="outline" size="sm" className="w-full justify-start gap-2">
                   <MessageSquare className="h-4 w-4 text-muted-foreground" />
                   Buka Chat AI (Layar Penuh)
                 </Button>

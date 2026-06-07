@@ -1,10 +1,9 @@
 /**
  * Suggested Questions Component
- * Displays clickable suggested questions
+ * Displays clickable suggested questions in a compact pill format
  */
 'use client'
 
-import { Button } from '@/components/ui/button'
 import { Sparkles } from 'lucide-react'
 
 interface SuggestedQuestionsProps {
@@ -14,24 +13,23 @@ interface SuggestedQuestionsProps {
 
 export function SuggestedQuestions({ suggestions, onSelect }: SuggestedQuestionsProps) {
   return (
-    <div className="w-full max-w-2xl">
-      <div className="flex items-center gap-2 mb-4 justify-center">
-        <Sparkles className="h-5 w-5 text-accent" />
-        <span className="text-base font-bold text-slate-700">
-          Pertanyaan yang disarankan:
+    <div className="w-full">
+      <div className="flex items-center gap-2 mb-3 justify-center">
+        <Sparkles className="h-4 w-4 text-brand-blue" />
+        <span className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
+          Mungkin Anda ingin bertanya:
         </span>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="flex flex-wrap gap-2 justify-center">
         {suggestions.map((suggestion, index) => (
-          <Button
+          <button
             key={index}
-            variant="outline"
             onClick={() => onSelect(suggestion)}
-            className="h-auto min-h-[56px] justify-start border-slate-300 px-4 py-3 text-left hover:border-brand-blue hover:bg-slate-50 shadow-sm"
+            className="px-4 py-2 text-sm font-semibold bg-background border border-border rounded-full hover:border-brand-blue hover:bg-muted transition-all active:scale-95 shadow-sm text-foreground text-left"
           >
-            <span className="text-base font-semibold text-slate-900">{suggestion}</span>
-          </Button>
+            {suggestion}
+          </button>
         ))}
       </div>
     </div>

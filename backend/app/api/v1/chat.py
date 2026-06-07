@@ -164,7 +164,7 @@ async def chat(
 
 
 @router.post(
-    "/transcribe",
+    "/transcribe/",
     response_model=TranscriptionResponse,
     summary="Transcribe voice to text",
     description="Convert Indonesian voice notes to text using Groq Whisper"
@@ -220,7 +220,7 @@ async def transcribe_voice(
 
 
 @router.get(
-    "/suggestions",
+    "/suggestions/",
     response_model=SuggestedQuestionsResponse,
     summary="Get suggested questions",
     description="Get AI-generated suggested questions based on your data"
