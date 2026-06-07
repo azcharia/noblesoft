@@ -123,7 +123,7 @@ export const apiClient = {
       apiRequest<Product>(`/products/${id}`, { method: 'GET' }),
     
     create: (data: ProductCreate) =>
-      apiRequest<Product>('/products', {
+      apiRequest<Product>('/products/', {
         method: 'POST',
         body: JSON.stringify(data),
       }),

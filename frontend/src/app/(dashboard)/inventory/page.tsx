@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, Search, Filter, AlertTriangle, RefreshCw } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -142,8 +143,10 @@ export default function InventoryPage() {
 
       if (editingId) {
         await apiClient.products.update(editingId, payload)
+        toast.success(`Berhasil memperbarui data ${payload.name}!`)
       } else {
         await apiClient.products.create(payload)
+        toast.success(`Berhasil menambahkan barang: ${payload.name}!`)
       }
 
       resetForm()
@@ -151,7 +154,9 @@ export default function InventoryPage() {
       await loadProducts()
     } catch (err) {
       console.error('Failed to submit product form:', err)
-      setError(err instanceof Error ? err.message : 'Gagal menyimpan data produk.')
+      const msg = err instanceof Error ? err.message : 'Gagal menyimpan data produk.'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setIsSubmitting(false)
     }

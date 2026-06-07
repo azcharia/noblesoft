@@ -30,6 +30,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { Toaster } from 'sonner';
+
 export default function RootLayout({
   children,
 }: {
@@ -37,7 +39,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${openSans.variable} ${montserrat.variable} ${jetbrainsMono.variable}`}>
-      <body className={openSans.className}>{children}</body>
+      <body className={openSans.className}>
+        {children}
+        <Toaster position="top-center" richColors />
+      </body>
     </html>
   );
 }
