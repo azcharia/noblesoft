@@ -205,7 +205,7 @@ export default function InventoryPage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>SKU / Kode Barang <span className="text-destructive">*</span></Label>
+                  <Label>Kode Barang <span className="text-destructive">*</span></Label>
                   <Input
                     placeholder="Contoh: KB-001"
                     value={formState.sku}
@@ -231,7 +231,7 @@ export default function InventoryPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Harga Satuan <span className="text-destructive">*</span></Label>
+                  <Label>Harga Jual <span className="text-destructive">*</span></Label>
                   <Input
                     type="text"
                     placeholder="Rp 0"
@@ -294,16 +294,16 @@ export default function InventoryPage() {
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Cari barang berdasarkan nama, kode barang (SKU), atau keterangan..."
+            placeholder="Cari nama barang atau kode barang..."
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             className="pl-10"
           />
         </div>
-        <Button variant="outline" className="gap-2">
+        {/* <Button variant="outline" className="gap-2">
           <Filter className="w-4 h-4" />
           Penyaring
-        </Button>
+        </Button> */}
       </div>
       
       {/* Stats */}
@@ -329,7 +329,7 @@ export default function InventoryPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Kode Barang (SKU)</TableHead>
+              <TableHead>Kode Barang</TableHead>
               <TableHead>Nama Barang</TableHead>
               <TableHead>Kategori</TableHead>
               <TableHead className="text-right">Harga Jual</TableHead>
