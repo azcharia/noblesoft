@@ -401,7 +401,7 @@ export function ChatInterface({ noBorder = false }: ChatInterfaceProps) {
                 ? "Sedang merekam suara..." 
                 : isTranscribing 
                   ? "Sedang memproses suara..." 
-                  : "Ketik pertanyaan Anda... (Enter untuk kirim)"
+                  : "Tanya ke Asisten: 'Berapa stok gula pasir?'"
             }
             className="flex-1 min-h-[48px] max-h-[200px] resize-none text-base"
             disabled={isLoading || isRecording || isTranscribing}
