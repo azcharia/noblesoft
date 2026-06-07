@@ -28,7 +28,7 @@ export default function RegisterPage() {
 
     try {
       // 1. Hit registration endpoint at backend
-      const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/api/v1/tenants/register`, {
+      const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/tenants/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
