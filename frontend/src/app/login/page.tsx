@@ -39,9 +39,9 @@ export default function LoginPage() {
         router.refresh();
       }
     } catch (err: any) {
-      let errorMessage = err.message || 'Gagal masuk. Silakan coba lagi.';
-      if (err.message?.toLowerCase().includes('invalid')) {
-        errorMessage = 'Email atau password salah. Yuk, coba periksa kembali!';
+      let errorMessage = 'Aduh, sistem sedang sibuk. Boleh coba sebentar lagi?';
+      if (err.message?.toLowerCase().includes('invalid') || err.message?.toLowerCase().includes('credentials')) {
+        errorMessage = 'Hmm, sepertinya Email atau Password-nya keliru. Coba dicek lagi ya!';
       }
       setError(errorMessage);
     } finally {

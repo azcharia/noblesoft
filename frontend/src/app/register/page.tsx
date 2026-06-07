@@ -166,12 +166,12 @@ export default function RegisterPage() {
               <div className="space-y-1.5">
                 <label htmlFor="password" className="text-xs font-medium flex items-center gap-2 text-brand-teal">
                   <Lock className="w-3.5 h-3.5 text-accent" />
-                  Password
+                  Password (Kata Sandi)
                 </label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Minimal 6 karakter"
+                  placeholder="Ketik rahasia Anda di sini..."
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -179,6 +179,12 @@ export default function RegisterPage() {
                   disabled={loading}
                   className="h-10 glass-input text-sm"
                 />
+                {password.length > 0 && password.length < 6 && (
+                  <p className="text-[10px] text-destructive mt-1">Kata sandi kurang panjang (minimal 6 huruf/angka).</p>
+                )}
+                {password.length >= 6 && (
+                  <p className="text-[10px] text-emerald-600 mt-1">Kata sandi sudah aman!</p>
+                )}
               </div>
 
               {/* Error message */}
