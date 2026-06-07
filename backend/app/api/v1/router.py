@@ -32,7 +32,8 @@ api_router.include_router(
 api_router.include_router(
     chat.router,
     prefix="/chat",
-    tags=["AI Chat"]
+    tags=["AI Chat"],
+    redirect_slashes=False
 )
 
 api_router.include_router(

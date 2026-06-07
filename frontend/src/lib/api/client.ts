@@ -483,19 +483,19 @@ export const apiClient = {
   // AI Chat API
   chat: {
     send: (message: string, conversationHistory?: Array<{ role: string; content: string }>) =>
-      apiRequest<ChatResponse>('/chat', {
+      apiRequest<ChatResponse>('/chat/', {
         method: 'POST',
         body: JSON.stringify({ message, conversation_history: conversationHistory }),
       }),
     
     confirm: (pendingAction: any) =>
-      apiRequest<ChatResponse>('/chat/confirm', {
+      apiRequest<ChatResponse>('/chat/confirm/', {
         method: 'POST',
         body: JSON.stringify(pendingAction),
       }),
     
     getSuggestions: () =>
-      apiRequest<{ suggestions: string[] }>('/chat/suggestions', { method: 'GET' }),
+      apiRequest<{ suggestions: string[] }>('/chat/suggestions/', { method: 'GET' }),
     
     transcribe: async (audioBlob: Blob) => {
       const formData = new FormData()
@@ -503,7 +503,7 @@ export const apiClient = {
       
       const token = await getSessionToken({ retries: 2, ensureHydrated: true })
       
-      const response = await fetch(`${API_BASE_URL}/chat/transcribe`, {
+      const response = await fetch(`${API_BASE_URL}/chat/transcribe/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
