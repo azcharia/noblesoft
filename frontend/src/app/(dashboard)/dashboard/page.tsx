@@ -95,9 +95,9 @@ export default function DashboardPage() {
         />
         <StatCard
           className="glass-card border-none shadow-sm"
-          title="Perkiraan Keuntungan"
+          title="Perkiraan Untung Bersih"
           value={formatCurrency(estimatedProfit)}
-          subtitle="Estimasi keuntungan bersih (margin 30%)"
+          subtitle="Perkiraan untung hari ini (asumsi margin 30%)"
           tone="accent"
         />
         <StatCard
@@ -182,7 +182,7 @@ export default function DashboardPage() {
               <Link href="/invoices" className="block">
                 <Button variant="outline" className="w-full justify-start gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
-                  Atur Tagihan / Nota
+                  Kelola Nota Pembeli
                 </Button>
               </Link>
               <Link href="/chat" className="block">
