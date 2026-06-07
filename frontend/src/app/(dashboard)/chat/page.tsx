@@ -16,7 +16,7 @@ export default async function ChatPage() {
   }
   
   return (
-    <div className="h-[calc(100vh-120px)] flex flex-col gap-3 overflow-hidden">
+    <div className="flex-1 flex flex-col gap-3 overflow-hidden">
       <div className="flex-shrink-0">
         <PageHeader
           label="Asisten Pintar"
